@@ -56,29 +56,9 @@ class UnifiedVehicleFetcher:
         ]
         print("[INFO] Sistema unificado iniciado com parsers modularizados")
     
-    def get_urls(self) -> List[Dict[str, str]]:
-        """
-        Obtém todas as URLs das variáveis de ambiente com suas localizações
-        Retorna lista de dicts com 'url', 'localizacao' e 'env_name'
-        """
-        configs = []
-        
-        for env_name, env_value in os.environ.items():
-            # Ignora se não é uma URL válida
-            if not env_value or not env_value.startswith('http'):
-                continue
-            
-            # Pega URLs de qualquer ENV (não só XML_URL)
-            # Define localização: se começa com XML, fica vazio, senão usa o nome da ENV
-            localizacao = "" if env_name.upper().startswith("XML") else env_name
-            
-            configs.append({
-                'url': env_value,
-                'localizacao': localizacao,
-                'env_name': env_name
-            })
-        
-        return configs
+    def get_urls(self) -> List[str]: 
+        """Obtém todas as URLs das variáveis de ambiente"""
+        return list({val for var, val in os.environ.items() if var.startswith("XML_URL") and val})
     
     def detect_format(self, content: bytes, url: str) -> tuple[Any, str]:
         """Detecta se o conteúdo é JSON ou XML"""
@@ -110,16 +90,9 @@ class UnifiedVehicleFetcher:
         
         return None
     
-    def process_url(self, config: Dict[str, str]) -> List[Dict]:
-        """Processa uma URL específica com sua localização"""
-        url = config['url']
-        localizacao = config['localizacao']
-        env_name = config['env_name']
-        
-        print(f"[INFO] Processando {env_name}: {url}")
-        if localizacao:
-            print(f"[INFO] Localização: {localizacao}")
-        
+    def process_url(self, url: str) -> List[Dict]:
+        """Processa uma URL específica"""
+        print(f"[INFO] Processando URL: {url}")
         try:
             response = requests.get(url, timeout=30)
             response.raise_for_status()
@@ -128,8 +101,7 @@ class UnifiedVehicleFetcher:
             
             parser = self.select_parser(data, url)
             if parser:
-                # Passa a localização para o parser
-                return parser.parse(data, url, localizacao=localizacao)
+                return parser.parse(data, url)
             else:
                 print(f"[ERRO] Nenhum parser adequado encontrado para URL: {url}")
                 return []
@@ -143,13 +115,13 @@ class UnifiedVehicleFetcher:
     
     def fetch_all(self) -> Dict:
         """Executa a coleta de todas as fontes"""
-        configs = self.get_urls()
-        if not configs:
-            print("[AVISO] Nenhuma variável de ambiente com URLs foi encontrada.")
+        urls = self.get_urls()
+        if not urls:
+            print("[AVISO] Nenhuma variável de ambiente 'XML_URL' foi encontrada.")
             return {}
         
-        print(f"[INFO] {len(configs)} URL(s) encontrada(s) para processar")
-        all_vehicles = [vehicle for config in configs for vehicle in self.process_url(config)]
+        print(f"[INFO] {len(urls)} URL(s) encontrada(s) para processar")
+        all_vehicles = [vehicle for url in urls for vehicle in self.process_url(url)]
         
         # Estatísticas por tipo e categoria
         stats = self._generate_stats(all_vehicles)
@@ -158,7 +130,7 @@ class UnifiedVehicleFetcher:
             "veiculos": all_vehicles, 
             "_updated_at": datetime.now().isoformat(), 
             "_total_count": len(all_vehicles), 
-            "_sources_processed": len(configs),
+            "_sources_processed": len(urls),
             "_statistics": stats
         }
         
@@ -181,17 +153,13 @@ class UnifiedVehicleFetcher:
             "carros_por_categoria": {},
             "top_marcas": {},
             "cilindradas_motos": {},
-            "por_localizacao": {}  # NOVA ESTATÍSTICA
+            "parsers_utilizados": {}
         }
         
         for vehicle in vehicles:
             # Estatísticas por tipo
             tipo = vehicle.get("tipo", "indefinido")
             stats["por_tipo"][tipo] = stats["por_tipo"].get(tipo, 0) + 1
-            
-            # Estatísticas por localização
-            localizacao = vehicle.get("localizacao") or "(sem localização)"
-            stats["por_localizacao"][localizacao] = stats["por_localizacao"].get(localizacao, 0) + 1
             
             # Estatísticas por categoria
             categoria = vehicle.get("categoria", "indefinido")
@@ -232,12 +200,6 @@ class UnifiedVehicleFetcher:
         print(f"\n📊 Distribuição por Tipo:")
         for tipo, count in sorted(stats["por_tipo"].items(), key=lambda x: x[1], reverse=True):
             print(f"  • {tipo}: {count}")
-        
-        # NOVA SEÇÃO: Distribuição por localização
-        if stats["por_localizacao"]:
-            print(f"\n📍 Distribuição por Localização:")
-            for loc, count in sorted(stats["por_localizacao"].items(), key=lambda x: x[1], reverse=True):
-                print(f"  • {loc}: {count}")
         
         if stats["motos_por_categoria"]:
             print(f"\n🏍️  Motos por Categoria:")
@@ -284,10 +246,8 @@ if __name__ == "__main__":
                 tipo = v.get('tipo', 'N/A')
                 categoria = v.get('categoria', 'N/A')
                 cilindrada = v.get('cilindrada', '')
-                localizacao = v.get('localizacao', '')
-                loc_str = f" [{localizacao}]" if localizacao else ""
                 cilindrada_str = f" - {cilindrada}cc" if cilindrada else ""
-                print(f"{i}. {v.get('marca', 'N/A')} {v.get('modelo', 'N/A')} ({tipo}/{categoria}{cilindrada_str}) {v.get('ano', 'N/A')} - R$ {v.get('preco', 0.0):,.2f}{loc_str}")
+                print(f"{i}. {v.get('marca', 'N/A')} {v.get('modelo', 'N/A')} ({tipo}/{categoria}{cilindrada_str}) {v.get('ano', 'N/A')} - R$ {v.get('preco', 0.0):,.2f}")
             
             # Exemplos específicos de motos categorizadas
             motos = [v for v in result['veiculos'] if v.get('tipo') and 'moto' in str(v.get('tipo')).lower()]
@@ -306,24 +266,3 @@ if __name__ == "__main__":
                     print(f"   Primeira foto: {fotos[0]}")
                     if len(fotos) > 1:
                         print(f"   Tipo da estrutura: Lista simples com {len(fotos)} URLs")
-```
-
-## Mudanças principais:
-
-1. **`get_urls()`** agora retorna lista de dicts com `url`, `localizacao` e `env_name`
-2. **`process_url()`** recebe o dict com a config e passa `localizacao` pro parser
-3. **Estatísticas** agora incluem distribuição por localização
-4. **Logs** mostram a localização ao processar
-
-Simples assim! 🚀
-
-Agora quando rodar, você vai ver:
-```
-[INFO] Processando Dutra: http://...
-[INFO] Localização: Dutra
-✅ 50 veículos de Dutra
-
-📍 Distribuição por Localização:
-  • Dutra: 50
-  • Invest: 35
-  • Concretize: 42
