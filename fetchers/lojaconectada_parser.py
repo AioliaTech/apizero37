@@ -11,7 +11,7 @@ class LojaConectadaParser(BaseParser):
     def can_parse(self, data: Any, url: str) -> bool:
         """Verifica se pode processar dados da Loja Conectada"""
         url = url.lower()
-        return "lojaconectada" in url or "loja conectada" in url
+        return "loja-conectada" in url or "loja conectada" in url
 
     def parse(self, data: Any, url: str) -> List[Dict]:
         """Processa dados da Loja Conectada"""
@@ -38,9 +38,13 @@ class LojaConectadaParser(BaseParser):
             categoria_veiculo = v.get("category", {}).get("name", "").lower()
             is_moto = categoria_veiculo == "motocicleta" or "moto" in categoria_veiculo
 
+            # Extrair motor da versão
+            versao_name = v.get("version", {}).get("name", "")
+            motor_veiculo = self._extract_motor_from_version(versao_name)
+
             if is_moto:
                 modelo_veiculo = v.get("model", {}).get("name", "")
-                versao_veiculo = v.get("version", {}).get("name", "")
+                versao_veiculo = versao_name
                 cilindrada_final, categoria_final = self.inferir_cilindrada_e_categoria_moto(
                     modelo_veiculo, versao_veiculo
                 )
@@ -49,7 +53,8 @@ class LojaConectadaParser(BaseParser):
                 modelo_veiculo = v.get("model", {}).get("name", "")
                 categoria_final = self.definir_categoria_veiculo(modelo_veiculo, opcionais_veiculo)
                 cilindrada_final = None
-                tipo_final = v.get("category", {}).get("name", "carro")
+                categoria_name = v.get("category", {}).get("name", "")
+                tipo_final = "carro" if categoria_name.lower() == "car" else categoria_name
 
             parsed = self.normalize_vehicle({
                 "id": v.get("ad_id"),
@@ -65,7 +70,7 @@ class LojaConectadaParser(BaseParser):
                 "cor": v.get("color", {}).get("name"),
                 "combustivel": v.get("fuel", {}).get("name"),
                 "cambio": v.get("transmission", {}).get("name"),
-                "motor": None,  # Não tem motor específico no JSON
+                "motor": motor_veiculo,
                 "portas": v.get("doors"),
                 "categoria": v.get("bodywork", {}).get("name") or categoria_final,
                 "cilindrada": cilindrada_final,
@@ -77,3 +82,15 @@ class LojaConectadaParser(BaseParser):
             parsed_vehicles.append(parsed)
 
         return parsed_vehicles
+
+    def _extract_motor_from_version(self, version_name: str) -> str:
+        """Extrai o motor da string da versão (ex: '2.0 TFSI ROADSTER 211CV' -> '2.0')"""
+        if not version_name:
+            return None
+
+        import re
+        # Procura por padrão de motor no início: dígitos.pontodígitos
+        match = re.match(r'^(\d+\.\d+)', version_name.strip())
+        if match:
+            return match.group(1)
+        return None
