@@ -19,6 +19,7 @@ from .comautoparser import ComautoParser1
 from .comautoparser import ComautoParser2
 from .revendaplus_parser import RevendaPlusParser
 from .carburgo_parser import CarburgoParser
+from .lojaconectada_parser import LojaConectadaParser
 
 __all__ = [
     'RevendaiParser',
@@ -39,4 +40,5 @@ __all__ = [
     'CarburgoParser',
     'WordPressParser',
     'RevendaPlusParser'
+    'LojaConectadaParser'
 ]
