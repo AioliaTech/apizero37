@@ -23,6 +23,7 @@ from fetchers import (
     ComautoParser2,
     RevendaPlusParser,
     CarburgoParser,
+    LojaConectadaParser,
     WordPressParser
 )
 
@@ -52,7 +53,8 @@ class UnifiedVehicleFetcher:
             ComautoParser2(),
             RevendaPlusParser(),
             CarburgoParser(),
-            WordPressParser()
+            WordPressParser(),
+            LojaConectadaParser()
         ]
         print("[INFO] Sistema unificado iniciado com parsers modularizados")
     
