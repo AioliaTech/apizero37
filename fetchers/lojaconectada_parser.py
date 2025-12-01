@@ -11,7 +11,7 @@ class LojaConectadaParser(BaseParser):
     def can_parse(self, data: Any, url: str) -> bool:
         """Verifica se pode processar dados da Loja Conectada"""
         url = url.lower()
-        return "loja-conectada" in url or "loja conectada" in url
+        return "lojaconectada" in url or "loja conectada" in url
 
     def parse(self, data: Any, url: str) -> List[Dict]:
         """Processa dados da Loja Conectada"""
