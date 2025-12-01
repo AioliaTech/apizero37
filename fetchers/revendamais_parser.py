@@ -1,142 +1,82 @@
 """
-Sistema unificado de processamento de XMLs com parsers modularizados
+Parser específico para Revendamais (revendamais.com.br)
 """
-import asyncio
-import requests
-import xmltodict
-from typing import List, Dict
-from config_loader import get_xml_configs, print_config_summary
-from parsers.revendamais_parser import RevendamaisParser
+from .base_parser import BaseParser
+from typing import Dict, List, Any, Optional
 
 
-async def processar_xml(config: Dict[str, str], parser: RevendamaisParser) -> List[Dict]:
-    """
-    Processa um único XML
+class RevendamaisParser(BaseParser):
+    """Parser para dados do Revendamais"""
     
-    Args:
-        config: Dict com 'url', 'localizacao', 'nome_env'
-        parser: Instância do parser
+    def can_parse(self, data: Any, url: str) -> bool:
+        """Verifica se pode processar dados do Revendamais ou Hey Veículos"""
+        url = url.lower()
+        return "revendamais.com.br" in url or "heyveiculos" in url
     
-    Returns:
-        Lista de veículos parseados
-    """
-    try:
-        localizacao_display = config['localizacao'] if config['localizacao'] else '(sem localização)'
-        print(f"\n🔄 Processando: {config['nome_env']}")
-        print(f"   Localização: {localizacao_display}")
+    def parse(self, data: Any, url: str, localizacao: Optional[str] = None) -> List[Dict]:
+        """Processa dados do Revendamais"""
+        ads = data["ADS"]["AD"]
+        if isinstance(ads, dict): 
+            ads = [ads]
         
-        # Baixa o XML
-        response = requests.get(config['url'], timeout=30)
-        response.raise_for_status()
+        parsed_vehicles = []
+        for v in ads:
+            modelo_veiculo = v.get("MODEL")
+            versao_veiculo = v.get("VERSION")
+            opcionais_veiculo = v.get("ACCESSORIES") or ""
+            
+            # Determina se é moto ou carro
+            categoria_veiculo = v.get("CATEGORY", "").lower()
+            is_moto = categoria_veiculo == "motocicleta" or "moto" in categoria_veiculo
+            
+            if is_moto:
+                cilindrada_final, categoria_final = self.inferir_cilindrada_e_categoria_moto(
+                    modelo_veiculo, versao_veiculo
+                )
+                tipo_final = "moto"
+            else:
+                categoria_final = self.definir_categoria_veiculo(modelo_veiculo, opcionais_veiculo)
+                cilindrada_final = None
+                tipo_final = v.get("CATEGORY")
+            
+            parsed = self.normalize_vehicle({
+                "id": v.get("ID"), 
+                "tipo": tipo_final, 
+                "versao": v.get("TITLE"),
+                "marca": v.get("MAKE"), 
+                "modelo": modelo_veiculo, 
+                "ano": v.get("YEAR"),
+                "ano_fabricacao": v.get("FABRIC_YEAR"), 
+                "km": v.get("MILEAGE"), 
+                "cor": v.get("COLOR"),
+                "combustivel": v.get("FUEL"), 
+                "cambio": v.get("GEAR"), 
+                "motor": v.get("MOTOR"),
+                "portas": v.get("DOORS"), 
+                "categoria": v.get("BODY_TYPE") or categoria_final,
+                "cilindrada": cilindrada_final, 
+                "preco": self.converter_preco(v.get("PRICE")),
+                "opcionais": opcionais_veiculo, 
+                "fotos": self._extract_photos(v),
+                "localizacao": localizacao or ""  # ÚNICO CAMPO NOVO
+            })
+            parsed_vehicles.append(parsed)
         
-        # Parse XML
-        data = xmltodict.parse(response.content)
-        
-        # Verifica se o parser pode processar
-        if not parser.can_parse(data, config['url']):
-            print(f"   ⚠️  Parser não suporta este formato")
+        return parsed_vehicles
+    
+    def _extract_photos(self, v: Dict) -> List[str]:
+        """Extrai fotos do veículo Revendamais"""
+        images = v.get("IMAGES", [])
+        if not images: 
             return []
         
-        # Processa com localização
-        vehicles = parser.parse(
-            data=data,
-            url=config['url'],
-            localizacao=config['localizacao']
-        )
+        if isinstance(images, list):
+            return [
+                img.get("IMAGE_URL") 
+                for img in images 
+                if isinstance(img, dict) and img.get("IMAGE_URL")
+            ]
+        elif isinstance(images, dict) and images.get("IMAGE_URL"):
+            return [images["IMAGE_URL"]]
         
-        print(f"   ✅ {len(vehicles)} veículos encontrados")
-        
-        return vehicles
-        
-    except requests.exceptions.Timeout:
-        print(f"   ❌ Timeout ao baixar XML")
         return []
-    except requests.exceptions.RequestException as e:
-        print(f"   ❌ Erro ao baixar XML: {e}")
-        return []
-    except Exception as e:
-        print(f"   ❌ Erro ao processar: {e}")
-        import traceback
-        traceback.print_exc()
-        return []
-
-
-async def processar_todos_xmls() -> List[Dict]:
-    """
-    Processa todos os XMLs configurados nas variáveis de ambiente
-    
-    Returns:
-        Lista com todos os veículos de todos os XMLs
-    """
-    print("[INFO] Sistema unificado iniciado com parsers modularizados")
-    
-    # Carrega configurações
-    configs = get_xml_configs()
-    
-    if not configs:
-        print("[AVISO] Nenhuma variável de ambiente 'XML_URL' foi encontrada.")
-        print("Atualização concluída: 0 veículos carregados")
-        return []
-    
-    # Mostra resumo
-    print_config_summary(configs)
-    
-    # Inicializa parser
-    parser = RevendamaisParser()
-    
-    # Processa todos os XMLs
-    print("🚀 Iniciando processamento dos XMLs...")
-    all_vehicles = []
-    
-    for i, config in enumerate(configs, 1):
-        print(f"\n[{i}/{len(configs)}] ", end="")
-        vehicles = await processar_xml(config, parser)
-        all_vehicles.extend(vehicles)
-    
-    # Resumo final
-    print("\n" + "=" * 80)
-    print("RESUMO FINAL")
-    print("=" * 80)
-    print(f"📊 Total de veículos carregados: {len(all_vehicles)}")
-    
-    # Agrupa por localização
-    por_localizacao = {}
-    for vehicle in all_vehicles:
-        loc = vehicle.get('localizacao') or '(sem localização)'
-        por_localizacao[loc] = por_localizacao.get(loc, 0) + 1
-    
-    if por_localizacao:
-        print("\n📍 Veículos por localização:")
-        for loc, count in sorted(por_localizacao.items()):
-            print(f"   • {loc}: {count} veículos")
-    
-    print("=" * 80)
-    print(f"✅ Atualização concluída: {len(all_vehicles)} veículos carregados\n")
-    
-    return all_vehicles
-
-
-def main():
-    """Ponto de entrada do sistema"""
-    try:
-        vehicles = asyncio.run(processar_todos_xmls())
-        
-        # Aqui você pode:
-        # - Salvar no banco de dados
-        # - Enviar para uma API
-        # - Gerar um relatório
-        # etc.
-        
-        return vehicles
-    except KeyboardInterrupt:
-        print("\n⚠️  Processamento interrompido pelo usuário")
-        return []
-    except Exception as e:
-        print(f"\n❌ Erro fatal no sistema: {e}")
-        import traceback
-        traceback.print_exc()
-        return []
-
-
-if __name__ == "__main__":
-    main()
