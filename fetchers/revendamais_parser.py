@@ -1,9 +1,9 @@
 """
 Parser específico para Revendamais (revendamais.com.br)
 """
-
 from .base_parser import BaseParser
-from typing import Dict, List, Any
+from typing import Dict, List, Any, Optional
+
 
 class RevendamaisParser(BaseParser):
     """Parser para dados do Revendamais"""
@@ -12,13 +12,26 @@ class RevendamaisParser(BaseParser):
         """Verifica se pode processar dados do Revendamais ou Hey Veículos"""
         url = url.lower()
         return "revendamais.com.br" in url or "heyveiculos" in url
-
-
-    def parse(self, data: Any, url: str) -> List[Dict]:
-        """Processa dados do Revendamais"""
+    
+    def parse(self, data: Any, url: str, localizacao: Optional[str] = None) -> List[Dict]:
+        """
+        Processa dados do Revendamais
+        
+        Args:
+            data: Dados XML parseados
+            url: URL de origem dos dados
+            localizacao: Nome da localização (ex: "Dutra", "Invest", etc). 
+                        Se None ou vazio, localização fica em branco
+        
+        Returns:
+            Lista de veículos parseados
+        """
         ads = data["ADS"]["AD"]
         if isinstance(ads, dict): 
             ads = [ads]
+        
+        # Define localização (vazio se None)
+        localizacao_final = localizacao or ""
         
         parsed_vehicles = []
         for v in ads:
@@ -39,7 +52,7 @@ class RevendamaisParser(BaseParser):
                 categoria_final = self.definir_categoria_veiculo(modelo_veiculo, opcionais_veiculo)
                 cilindrada_final = None
                 tipo_final = v.get("CATEGORY")
-
+            
             parsed = self.normalize_vehicle({
                 "id": v.get("ID"), 
                 "tipo": tipo_final, 
@@ -58,7 +71,8 @@ class RevendamaisParser(BaseParser):
                 "cilindrada": cilindrada_final, 
                 "preco": self.converter_preco(v.get("PRICE")),
                 "opcionais": opcionais_veiculo, 
-                "fotos": self._extract_photos(v)
+                "fotos": self._extract_photos(v),
+                "localizacao": localizacao_final  # NOVO CAMPO
             })
             parsed_vehicles.append(parsed)
         
