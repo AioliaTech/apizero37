@@ -49,6 +49,7 @@ class AutocertoParser(BaseParser):
                 "km": v.get("quilometragem"),
                 "cor": v.get("cor"),
                 "combustivel": v.get("combustivel"),
+                "observacao": v.get("observacoes"),
                 "cambio": v.get("cambio"),
                 "motor": self._extract_motor_from_version(v.get("versao")),
                 "portas": v.get("numeroportas"),
