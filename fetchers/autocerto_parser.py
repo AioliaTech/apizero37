@@ -13,6 +13,24 @@ class AutocertoParser(BaseParser):
         """Verifica se pode processar dados do Autocerto"""
         return "autocerto.com" in url.lower()
     
+    def _detectar_categoria_em_texto(self, versao: str, observacoes: str) -> str:
+        """
+        Detecta categoria HATCH ou SEDAN nos campos versao e observacoes.
+        Retorna a categoria encontrada ou None se não encontrar.
+        """
+        # Concatena versão e observações para buscar
+        texto_completo = f"{versao or ''} {observacoes or ''}".upper()
+        
+        # Busca por HATCH primeiro
+        if "HATCH" in texto_completo:
+            return "Hatch"
+        
+        # Busca por SEDAN
+        if "SEDAN" in texto_completo:
+            return "Sedan"
+        
+        return None
+    
     def parse(self, data: Any, url: str) -> List[Dict]:
         """Processa dados do Autocerto"""
         veiculos = data["estoque"]["veiculo"]
@@ -23,6 +41,7 @@ class AutocertoParser(BaseParser):
         for v in veiculos:
             modelo_veiculo = v.get("modelo")
             versao_veiculo = v.get("versao")
+            observacoes_veiculo = v.get("observacoes")
             opcionais_veiculo = self._parse_opcionais(v.get("opcionais"))
             
             # Determina se é moto ou carro
@@ -34,7 +53,18 @@ class AutocertoParser(BaseParser):
                     modelo_veiculo, versao_veiculo
                 )
             else:
-                categoria_final = self.definir_categoria_veiculo(modelo_veiculo, opcionais_veiculo)
+                # Tenta detectar categoria em versão e observações primeiro
+                categoria_detectada = self._detectar_categoria_em_texto(
+                    versao_veiculo, 
+                    observacoes_veiculo
+                )
+                
+                if categoria_detectada:
+                    categoria_final = categoria_detectada
+                else:
+                    # Se não encontrou, usa a função existente
+                    categoria_final = self.definir_categoria_veiculo(modelo_veiculo, opcionais_veiculo)
+                
                 cilindrada_final = None
             
             parsed = self.normalize_vehicle({
@@ -49,7 +79,7 @@ class AutocertoParser(BaseParser):
                 "km": v.get("quilometragem"),
                 "cor": v.get("cor"),
                 "combustivel": v.get("combustivel"),
-                "observacao": v.get("observacoes"),
+                "observacao": observacoes_veiculo,
                 "cambio": v.get("cambio"),
                 "motor": self._extract_motor_from_version(v.get("versao")),
                 "portas": v.get("numeroportas"),
