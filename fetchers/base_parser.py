@@ -131,7 +131,7 @@ class BaseParser(ABC):
         texto_norm = re.sub(r'\s+', ' ', texto_norm).strip()
         return texto_norm
     
-    def definir_categoria_veiculo(self, modelo: str, opcionais: str = "") -> str:
+    def definir_categoria_veiculo(self, modelo: str, opcionais: str = "", version: str = "") -> str:
         """
         Define a categoria de um veículo usando busca EXATA no mapeamento.
         Para modelos ambíguos ("hatch,sedan"), usa os opcionais para decidir.
