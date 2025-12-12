@@ -63,6 +63,7 @@ for model in offroad_models:
 MAPEAMENTO_MOTOS = {
     # Street/Urbanas (commuter básicas e econômicas)
     "EN": (125, "street"),
+    "duke 200": (200, "street"),
     "scram 411": (400, "street"),
     "DK 150": (150, "street"),
     "SPEED 400": (400, "street"),
@@ -204,6 +205,7 @@ MAPEAMENTO_MOTOS = {
     "dl160": (160, "trail"),
     
     # BigTrail/Adventure (alta cilindrada, touring)
+    "t350": (350, "bigtrail"),
     "cb 500x": (500, "bigtrail"),
     "f 800": (800, "bigtrail"),
     "tiger 660": (660, "trail"),
@@ -394,14 +396,16 @@ MAPEAMENTO_MOTOS = {
     "xt 600": (600, "touring"),
     "xt600": (600, "touring"),  # Variação sem espaço
     "HERITAGE": (1690, "touring"),
-    
+
+
     # ATV/Quadriciclo
-    "cforce 1000": (1000, "custom"),
-    "cforce1000": (1000, "custom"),  # Variação sem espaço
-    "trx 420": (420, "custom"),
-    "trx420": (420, "custom"),  # Variação sem espaço
-    "t350 x": (350, "custom"),
-    "t350x": (350, "custom"),  # Variação sem espaço
+    "BOMBARDIER 200 RALLY": (200, "quadriciculo"),
+    "cforce 1000": (1000, "quadriciculo"),
+    "cforce1000": (1000, "quadriciculo"),  # Variação sem espaço
+    "trx 420": (420, "quadriciculo"),
+    "trx420": (420, "quadriciculo"),  # Variação sem espaço
+    "t350 x": (350, "quadriciculo"),
+    "t350x": (350, "quadriciculo"),  # Variação sem espaço
     
     # Modelos especiais
     "commander 250": (250, "street"),
