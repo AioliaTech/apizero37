@@ -21,7 +21,7 @@ hatch_sedan_models = ["330e", "320iA", "onix", "hb20", "yaris", "city", "a3", "c
 for model in hatch_sedan_models: 
     MAPEAMENTO_CATEGORIAS[model] = "hatch,sedan"
 
-suv_models = ["kona", "KONA", "freemont", "RANGE ROVER SPORT", "GLK 220", "disc spt", "veracruz", "Captiva", "Discovery", "Macan", "JOURNEY", "XC90", "xc60", "tiggo", "edge", "outlander", "range rover evoque", "song plus", "duster", "ecosport", "hrv", "hr-v", "COMPASS", "compass", "renegade", "tracker", "kicks", "captur", "creta", "tucson", "santa fe", "sorento", "sportage", "pajero", "tr4", "aircross", "tiguan", "t-cross", "tcross", "rav4", "land cruiser", "cherokee", "grand cherokee", "trailblazer", "pulse", "fastback", "territory", "bronco sport", "2008", "3008", "5008", "c4 cactus", "taos", "crv", "cr-v", "corolla cross", "hilux sw4", "sw4", "pajero sport", "commander", "nivus", "equinox", "x1", "x2", "x3", "x4", "x5", "x6", "x7", "ix", "ix1", "ix2", "ix3", "gla", "glb", "glc", "gle", "gls", "classe g", "eqa", "eqb", "eqc", "q2", "q3", "q5", "q7", "q8", "q6 e-tron", "e-tron", "q4 e-tron", "q4etron", "wrx", "xv"]
+suv_models = ["vitara", "VITARA", "kona", "KONA", "freemont", "RANGE ROVER SPORT", "GLK 220", "disc spt", "veracruz", "Captiva", "Discovery", "Macan", "JOURNEY", "XC90", "xc60", "tiggo", "edge", "outlander", "range rover evoque", "song plus", "duster", "ecosport", "hrv", "hr-v", "COMPASS", "compass", "renegade", "tracker", "kicks", "captur", "creta", "tucson", "santa fe", "sorento", "sportage", "pajero", "tr4", "aircross", "tiguan", "t-cross", "tcross", "rav4", "land cruiser", "cherokee", "grand cherokee", "trailblazer", "pulse", "fastback", "territory", "bronco sport", "2008", "3008", "5008", "c4 cactus", "taos", "crv", "cr-v", "corolla cross", "hilux sw4", "sw4", "pajero sport", "commander", "nivus", "equinox", "x1", "x2", "x3", "x4", "x5", "x6", "x7", "ix", "ix1", "ix2", "ix3", "gla", "glb", "glc", "gle", "gls", "classe g", "eqa", "eqb", "eqc", "q2", "q3", "q5", "q7", "q8", "q6 e-tron", "e-tron", "q4 e-tron", "q4etron", "wrx", "xv"]
 for model in suv_models: 
     MAPEAMENTO_CATEGORIAS[model] = "SUV"
 
@@ -45,7 +45,7 @@ conversivel_models = ["911 cabrio", "beetle cabriolet", "boxster", "eos", "miata
 for model in conversivel_models: 
     MAPEAMENTO_CATEGORIAS[model] = "Conversível"
 
-station_wagon_models = ["a4 avant", "fielder", "golf variant", "palio weekend", "parati", "quantum", "spacefox", "rs2", "rs4", "rs6"]
+station_wagon_models = ["weekend", "a4 avant", "fielder", "golf variant", "palio weekend", "parati", "quantum", "spacefox", "rs2", "rs4", "rs6"]
 for model in station_wagon_models: 
     MAPEAMENTO_CATEGORIAS[model] = "Station Wagon"
 
