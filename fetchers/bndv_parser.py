@@ -11,6 +11,28 @@ import re
 class BndvParser(BaseParser):
     """Parser para dados do BNDV"""
     
+    # Mapeamento de categorias específico do BNDV
+    CATEGORIA_MAPPING = {
+        "conversivel/cupe": "Conversível",
+        "conversível/cupê": "Conversível",
+        "conversivel": "Conversível",
+        "picapes": "Caminhonete",
+        "picape": "Caminhonete",
+        "suv / utilitario esportivo": "SUV",
+        "suv / utilitário esportivo": "SUV",
+        "suv": "SUV",
+        "van/utilitario": "Utilitário",
+        "van/utilitário": "Utilitário",
+        "utilitario": "Utilitário",
+        "wagon/perua": "Minivan",
+        "perua": "Minivan",
+        "minivan": "Minivan",
+        "hatch": "Hatch",
+        "sedan": "Sedan",
+        "caminhonete": "Caminhonete",
+        "off-road": "Off-road"
+    }
+    
     def can_parse(self, data: Any, url: str) -> bool:
         """Verifica se pode processar dados do BNDV"""
         # Verifica se é BNDV pela URL ou estrutura dos dados
@@ -36,12 +58,28 @@ class BndvParser(BaseParser):
             marca = v.get("markName")
             modelo = v.get("modelName")
             versao = v.get("versionName")
+            subcategory = v.get("subCategoryName")
             
             # Processa opcionais
             opcionais_veiculo = self._parse_opcionais(v.get("itemJs"))
             
-            # Determina categoria
-            categoria_final = self.definir_categoria_veiculo(modelo, opcionais_veiculo)
+            # HIERARQUIA DE CATEGORIZAÇÃO:
+            # 1. Usa campo subCategoryName do JSON se disponível
+            subcategory_lower = subcategory.lower().strip() if subcategory else ""
+            categoria_subcategory = self.CATEGORIA_MAPPING.get(subcategory_lower, None)
+            
+            if categoria_subcategory:
+                categoria_final = categoria_subcategory
+            else:
+                # 2. Busca "hatch" ou "sedan" no modelo e versão
+                texto_busca = f"{modelo or ''} {versao or ''}".upper()
+                if "HATCH" in texto_busca:
+                    categoria_final = "Hatch"
+                elif "SEDAN" in texto_busca:
+                    categoria_final = "Sedan"
+                else:
+                    # 3. Infere do nosso mapeamento com sistema de scoring
+                    categoria_final = self.definir_categoria_veiculo(modelo, opcionais_veiculo)
             
             # Usa a placa ao contrário como ID
             placa = v.get("plate")
