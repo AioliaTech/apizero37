@@ -7,6 +7,28 @@ from typing import Dict, List, Any
 
 class RevendaPlusParser(BaseParser):
     """Parser para dados do RevendaPlus"""
+    
+    # Mapeamento de categorias específico do RevendaPlus
+    CATEGORIA_MAPPING = {
+        "conversivel/cupe": "Conversível",
+        "conversível/cupê": "Conversível",
+        "conversivel": "Conversível",
+        "picapes": "Caminhonete",
+        "picape": "Caminhonete",
+        "suv / utilitario esportivo": "SUV",
+        "suv / utilitário esportivo": "SUV",
+        "suv": "SUV",
+        "van/utilitario": "Utilitário",
+        "van/utilitário": "Utilitário",
+        "utilitario": "Utilitário",
+        "wagon/perua": "Minivan",
+        "perua": "Minivan",
+        "minivan": "Minivan",
+        "hatch": "Hatch",
+        "sedan": "Sedan",
+        "caminhonete": "Caminhonete",
+        "off-road": "Off-road"
+    }
 
     def _safe_float(self, value: Any, default: float = None) -> float:
         """Converte valor para float de forma segura"""
@@ -84,7 +106,28 @@ class RevendaPlusParser(BaseParser):
                 categoria_final = v.get("especie", "")
                 tipo_final = "moto"
             else:
-                categoria_final = self.definir_categoria_veiculo(modelo_veiculo, opcionais_veiculo)
+                # HIERARQUIA DE CATEGORIZAÇÃO:
+                # 1. Usa campo especie do JSON se disponível
+                especie = v.get("especie", "")
+                especie_lower = especie.lower().strip() if especie else ""
+                categoria_especie = self.CATEGORIA_MAPPING.get(especie_lower, None)
+                
+                if categoria_especie:
+                    categoria_final = categoria_especie
+                elif especie:
+                    # Se especie existe mas não está no mapeamento, usa direto
+                    categoria_final = especie
+                else:
+                    # 2. Busca "hatch" ou "sedan" no modelo
+                    texto_busca = f"{modelo_veiculo or ''}".upper()
+                    if "HATCH" in texto_busca:
+                        categoria_final = "Hatch"
+                    elif "SEDAN" in texto_busca:
+                        categoria_final = "Sedan"
+                    else:
+                        # 3. Infere do nosso mapeamento com sistema de scoring
+                        categoria_final = self.definir_categoria_veiculo(modelo_veiculo, opcionais_veiculo)
+                
                 cilindrada_final = None
                 tipo_final = v.get("tipo", "")
 
@@ -116,7 +159,7 @@ class RevendaPlusParser(BaseParser):
                 "cambio": v.get("cambio"),
                 "motor": v.get("potencia"),
                 "portas": None,
-                "categoria": v.get("especie") or categoria_final,
+                "categoria": categoria_final,
                 "cilindrada": cilindrada_final,
                 "preco": preco_value,
                 "opcionais": opcionais_veiculo,
