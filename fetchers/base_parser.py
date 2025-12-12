@@ -133,36 +133,59 @@ class BaseParser(ABC):
     
     def definir_categoria_veiculo(self, modelo: str, opcionais: str = "", version: str = "") -> str:
         """
-        Define a categoria de um veículo usando busca EXATA no mapeamento.
+        Define a categoria de um veículo com hierarquia:
+        1. Se MODELO contém "hatch" ou "sedan", usa essa categoria
+        2. Caso contrário, busca no mapeamento pelo match com mais palavras
         Para modelos ambíguos ("hatch,sedan"), usa os opcionais para decidir.
         """
-        if not modelo: 
+        if not modelo:
             return None
         
         modelo_norm = self.normalizar_texto(modelo)
         
-        # Busca exata - normaliza AMBOS os lados para comparação
+        # PRIORIDADE 1: Verifica se "hatch" ou "sedan" está no modelo
+        if "hatch" in modelo_norm:
+            return "Hatch"
+        if "sedan" in modelo_norm:
+            return "Sedan"
+        
+        # PRIORIDADE 2: Busca no mapeamento pelo MELHOR match (mais palavras correspondentes)
+        matches = []
+        
         for modelo_mapeado, categoria_result in MAPEAMENTO_CATEGORIAS.items():
-            if self.normalizar_texto(modelo_mapeado) == modelo_norm:
-                if categoria_result == "hatch,sedan":
-                    opcionais_norm = self.normalizar_texto(opcionais)
-                    opcional_chave_norm = self.normalizar_texto(OPCIONAL_CHAVE_HATCH)
-                    return "Hatch" if opcional_chave_norm in opcionais_norm else "Sedan"
-                else:
-                    return categoria_result
-        
-        # Busca parcial - para casos como "Onix LTZ" corresponder a "onix"
-        for modelo_mapeado, categoria in MAPEAMENTO_CATEGORIAS.items():
             modelo_mapeado_norm = self.normalizar_texto(modelo_mapeado)
+            
+            # Verifica se o modelo mapeado está contido no modelo do veículo
             if modelo_mapeado_norm in modelo_norm:
-                if categoria == "hatch,sedan":
-                    opcionais_norm = self.normalizar_texto(opcionais)
-                    opcional_chave_norm = self.normalizar_texto(OPCIONAL_CHAVE_HATCH)
-                    return "Hatch" if opcional_chave_norm in opcionais_norm else "Sedan"
-                else:
-                    return categoria
+                # Conta quantas palavras do mapeamento correspondem
+                palavras_mapeado = modelo_mapeado_norm.split()
+                palavras_modelo = modelo_norm.split()
+                
+                # Score: número de palavras que fazem match
+                palavras_match = sum(1 for p in palavras_mapeado if p in palavras_modelo)
+                
+                # Score adicional pelo comprimento total (preferir matches mais específicos)
+                score = (palavras_match * 100) + len(modelo_mapeado_norm)
+                
+                matches.append({
+                    'categoria': categoria_result,
+                    'score': score
+                })
         
-        return None  # Nenhuma correspondência encontrada
+        # Se encontrou matches, retorna o com maior score
+        if matches:
+            matches.sort(key=lambda x: x['score'], reverse=True)
+            categoria = matches[0]['categoria']
+            
+            # Para categorias ambíguas, usa os opcionais para decidir
+            if categoria == "hatch,sedan":
+                opcionais_norm = self.normalizar_texto(opcionais)
+                opcional_chave_norm = self.normalizar_texto(OPCIONAL_CHAVE_HATCH)
+                return "Hatch" if opcional_chave_norm in opcionais_norm else "Sedan"
+            else:
+                return categoria
+        
+        return None
     
     def inferir_cilindrada_e_categoria_moto(self, modelo: str, versao: str = ""):
         """
