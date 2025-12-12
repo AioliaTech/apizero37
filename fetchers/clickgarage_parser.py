@@ -49,7 +49,7 @@ class ClickGarageParser(BaseParser):
                 tipo_final = "moto"
             else:
                 # Para carros: usa o sistema existente com hierarquia
-                categoria_final = self.definir_categoria_veiculo(modelo_final, opcionais_processados, self._clean_version(modelo_completo))
+                categoria_final = self.definir_categoria_veiculo(modelo_completo, opcionais_processados, self._clean_version(modelo_completo))
                 cilindrada_final = None
                 tipo_final = "carro"
 
