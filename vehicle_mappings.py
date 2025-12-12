@@ -21,7 +21,7 @@ hatch_sedan_models = ["330e", "320iA", "onix", "hb20", "yaris", "city", "a3", "c
 for model in hatch_sedan_models: 
     MAPEAMENTO_CATEGORIAS[model] = "hatch,sedan"
 
-suv_models = ["blazer", "f-pace", "vitara", "VITARA", "kona", "KONA", "freemont", "RANGE ROVER SPORT", "GLK 220", "disc spt", "veracruz", "Captiva", "Discovery", "Macan", "JOURNEY", "XC90", "xc60", "tiggo", "edge", "outlander", "range rover evoque", "song plus", "duster", "ecosport", "hrv", "hr-v", "COMPASS", "compass", "renegade", "tracker", "kicks", "captur", "creta", "tucson", "santa fe", "sorento", "sportage", "pajero", "tr4", "aircross", "tiguan", "t-cross", "tcross", "rav4", "land cruiser", "cherokee", "grand cherokee", "trailblazer", "pulse", "fastback", "territory", "bronco sport", "2008", "3008", "5008", "c4 cactus", "taos", "crv", "cr-v", "corolla cross", "hilux sw4", "sw4", "pajero sport", "commander", "nivus", "equinox", "x1", "x2", "x3", "x4", "x5", "x6", "x7", "ix", "ix1", "ix2", "ix3", "gla", "glb", "glc", "gle", "gls", "classe g", "eqa", "eqb", "eqc", "q2", "q3", "q5", "q7", "q8", "q6 e-tron", "e-tron", "q4 e-tron", "q4etron", "wrx", "xv"]
+suv_models = ["wrv", "w-rv", "blazer", "f-pace", "vitara", "VITARA", "kona", "KONA", "freemont", "RANGE ROVER SPORT", "GLK 220", "disc spt", "veracruz", "Captiva", "Discovery", "Macan", "JOURNEY", "XC90", "xc60", "tiggo", "edge", "outlander", "range rover evoque", "song plus", "duster", "ecosport", "hrv", "hr-v", "COMPASS", "compass", "renegade", "tracker", "kicks", "captur", "creta", "tucson", "santa fe", "sorento", "sportage", "pajero", "tr4", "aircross", "tiguan", "t-cross", "tcross", "rav4", "land cruiser", "cherokee", "grand cherokee", "trailblazer", "pulse", "fastback", "territory", "bronco sport", "2008", "3008", "5008", "c4 cactus", "taos", "crv", "cr-v", "corolla cross", "hilux sw4", "sw4", "pajero sport", "commander", "nivus", "equinox", "x1", "x2", "x3", "x4", "x5", "x6", "x7", "ix", "ix1", "ix2", "ix3", "gla", "glb", "glc", "gle", "gls", "classe g", "eqa", "eqb", "eqc", "q2", "q3", "q5", "q7", "q8", "q6 e-tron", "e-tron", "q4 e-tron", "q4etron", "wrx", "xv"]
 for model in suv_models: 
     MAPEAMENTO_CATEGORIAS[model] = "SUV"
 
@@ -91,6 +91,7 @@ MAPEAMENTO_MOTOS = {
     "cg150 fan": (150, "street"),
     "cg 150 fan": (150, "street"),
     "cg 150 fan esdi": (150, "street"),
+    "fan 160": (160, "street"),
     "cg150 titan": (150, "street"),
     "ybr 150": (150, "street"),
     "ybr150": (150, "street"),  # Variação sem espaço
@@ -193,6 +194,7 @@ MAPEAMENTO_MOTOS = {
     "xtz 250": (250, "trail"),
     "xtz250": (250, "trail"),  # Variação sem espaço
     "xtz 250 tenere": (250, "trail"),
+    "xtz 125": (125, "trail"),
     "xtz250 tenere": (250, "trail"),  # Variação sem espaço
     "tenere 250": (250, "trail"),
     "tenere250": (250, "trail"),  # Variação sem espaço
@@ -202,7 +204,8 @@ MAPEAMENTO_MOTOS = {
     "dl160": (160, "trail"),
     
     # BigTrail/Adventure (alta cilindrada, touring)
-    "cb 500x": (500, "bigtrail"),   
+    "cb 500x": (500, "bigtrail"),
+    "f 800": (800, "bigtrail"),
     "tiger 660": (660, "trail"),
     "DL 650": (650, "bigtrail"),
     "DL 650 XT": (650, "bigtrail"),
@@ -376,6 +379,8 @@ MAPEAMENTO_MOTOS = {
     "VT 600": (600, "custom"),
     
     # Touring (longas distâncias, conforto)
+    "dominar 400": (400, "touring"),
+    "xl 700v": (700, "touring"),
     "ELECTRA GLIDE ULTRA": (1700, "touring"),
     "GOLD WING 1500": (1500, "touring"),
     "road glide": (2150, "touring"),
