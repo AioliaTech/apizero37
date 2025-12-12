@@ -21,7 +21,7 @@ hatch_sedan_models = ["330e", "320iA", "onix", "hb20", "yaris", "city", "a3", "c
 for model in hatch_sedan_models: 
     MAPEAMENTO_CATEGORIAS[model] = "hatch,sedan"
 
-suv_models = ["wrv", "w-rv", "blazer", "f-pace", "vitara", "VITARA", "kona", "KONA", "freemont", "RANGE ROVER SPORT", "GLK 220", "disc spt", "veracruz", "Captiva", "Discovery", "Macan", "JOURNEY", "XC90", "xc60", "tiggo", "edge", "outlander", "range rover evoque", "song plus", "duster", "ecosport", "hrv", "hr-v", "COMPASS", "compass", "renegade", "tracker", "kicks", "captur", "creta", "tucson", "santa fe", "sorento", "sportage", "pajero", "tr4", "aircross", "tiguan", "t-cross", "tcross", "rav4", "land cruiser", "cherokee", "grand cherokee", "trailblazer", "pulse", "fastback", "territory", "bronco sport", "2008", "3008", "5008", "c4 cactus", "taos", "crv", "cr-v", "corolla cross", "hilux sw4", "sw4", "pajero sport", "commander", "nivus", "equinox", "x1", "x2", "x3", "x4", "x5", "x6", "x7", "ix", "ix1", "ix2", "ix3", "gla", "glb", "glc", "gle", "gls", "classe g", "eqa", "eqb", "eqc", "q2", "q3", "q5", "q7", "q8", "q6 e-tron", "e-tron", "q4 e-tron", "q4etron", "wrx", "xv"]
+suv_models = ["Cayenne", "wrv", "w-rv", "blazer", "f-pace", "vitara", "VITARA", "kona", "KONA", "freemont", "RANGE ROVER SPORT", "GLK 220", "disc spt", "veracruz", "Captiva", "Discovery", "Macan", "JOURNEY", "XC90", "xc60", "tiggo", "edge", "outlander", "range rover evoque", "song plus", "duster", "ecosport", "hrv", "hr-v", "COMPASS", "compass", "renegade", "tracker", "kicks", "captur", "creta", "tucson", "santa fe", "sorento", "sportage", "pajero", "tr4", "aircross", "tiguan", "t-cross", "tcross", "rav4", "land cruiser", "cherokee", "grand cherokee", "trailblazer", "pulse", "fastback", "territory", "bronco sport", "2008", "3008", "5008", "c4 cactus", "taos", "crv", "cr-v", "corolla cross", "hilux sw4", "sw4", "pajero sport", "commander", "nivus", "equinox", "x1", "x2", "x3", "x4", "x5", "x6", "x7", "ix", "ix1", "ix2", "ix3", "gla", "glb", "glc", "gle", "gls", "classe g", "eqa", "eqb", "eqc", "q2", "q3", "q5", "q7", "q8", "q6 e-tron", "e-tron", "q4 e-tron", "q4etron", "wrx", "xv"]
 for model in suv_models: 
     MAPEAMENTO_CATEGORIAS[model] = "SUV"
 
@@ -122,6 +122,7 @@ MAPEAMENTO_MOTOS = {
     
     # Scooter (transmissão automática, design step-through)
     "SH 300": (300, "scooter"),
+    "adv": (150, "scooter"),
     "160 DLX ABS": (160, "scooter"),
     "C 100": (100, "scooter"),
     "lead 110": (110, "scooter"),
@@ -284,6 +285,8 @@ MAPEAMENTO_MOTOS = {
     "ninja 1000": (1050, "esportiva carenada"),
     "ninja1000": (1050, "esportiva carenada"),  # Variação sem espaço
     "ninja zx-10r": (1000, "esportiva carenada"),
+    "ninja zx-10": (1000, "esportiva carenada"),
+    "ninja zx10": (1000, "esportiva carenada"),
     "ninja zx10r": (1000, "esportiva carenada"),  # Variação sem hífen
     "s 1000": (1000, "esportiva carenada"),
     "s1000": (1000, "esportiva carenada"),  # Variação sem espaço
@@ -399,6 +402,7 @@ MAPEAMENTO_MOTOS = {
 
 
     # ATV/Quadriciclo
+    "shark 125": (125, "quadriciculo"),
     "BOMBARDIER 200 RALLY": (200, "quadriciculo"),
     "cforce 1000": (1000, "quadriciculo"),
     "cforce1000": (1000, "quadriciculo"),  # Variação sem espaço
