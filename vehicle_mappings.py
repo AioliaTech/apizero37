@@ -154,6 +154,9 @@ MAPEAMENTO_MOTOS = {
     "dafra citycom 300": (300, "scooter"),
     "MAXSYM 400i": (400, "scooter"),
     "citycom": (300, "scooter"),
+    "ALTHUS STREET VOLT": (1000w, "scooter"),
+    "ALTHUS E MOB": (1000w, "scooter"),
+    "MAXUS": (1000w, "scooter"),
     
     # Trail/Offroad (dual-sport, suspensão robusta)
     "NH 190": (190, "trail"),
