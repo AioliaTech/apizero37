@@ -10,6 +10,28 @@ import os
 class SimplesVeiculoParser(BaseParser):
     """Parser para dados do SimplesVeiculo"""
     
+    # Mapeamento de categorias específico do SimplesVeiculo
+    CATEGORIA_MAPPING = {
+        "conversivel/cupe": "Conversível",
+        "conversível/cupê": "Conversível",
+        "conversivel": "Conversível",
+        "picapes": "Caminhonete",
+        "picape": "Caminhonete",
+        "suv / utilitario esportivo": "SUV",
+        "suv / utilitário esportivo": "SUV",
+        "suv": "SUV",
+        "van/utilitario": "Utilitário",
+        "van/utilitário": "Utilitário",
+        "utilitario": "Utilitário",
+        "wagon/perua": "Minivan",
+        "perua": "Minivan",
+        "minivan": "Minivan",
+        "hatch": "Hatch",
+        "sedan": "Sedan",
+        "caminhonete": "Caminhonete",
+        "off-road": "Off-road"
+    }
+    
     def can_parse(self, data: Any, url: str) -> bool:
         """Verifica se pode processar dados do SimplesVeiculo"""
         return "simplesveiculo.com.br" in url.lower()
@@ -53,8 +75,30 @@ class SimplesVeiculoParser(BaseParser):
                 )
                 tipo_final = "moto"
             else:
-                # Para carros: usa o sistema existente
-                categoria_final = self.definir_categoria_veiculo(modelo_final, "")
+                # HIERARQUIA DE CATEGORIZAÇÃO:
+                # 1. Usa campo body_style do XML se disponível
+                body_style = v.get("body_style", "")
+                body_style_lower = body_style.lower().strip() if body_style else ""
+                categoria_body = self.CATEGORIA_MAPPING.get(body_style_lower, None)
+                
+                description = v.get("description", "")
+                
+                if categoria_body:
+                    categoria_final = categoria_body
+                elif body_style:
+                    # Se body_style existe mas não está no mapeamento, usa direto
+                    categoria_final = body_style
+                else:
+                    # 2. Busca "hatch" ou "sedan" em model e description
+                    texto_busca = f"{modelo_completo or ''} {description or ''}".upper()
+                    if "HATCH" in texto_busca:
+                        categoria_final = "Hatch"
+                    elif "SEDAN" in texto_busca:
+                        categoria_final = "Sedan"
+                    else:
+                        # 3. Infere do nosso mapeamento com sistema de scoring
+                        categoria_final = self.definir_categoria_veiculo(modelo_final, "")
+                
                 cilindrada_final = None
                 tipo_final = "carro"
             
