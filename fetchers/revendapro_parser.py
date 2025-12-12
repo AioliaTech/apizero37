@@ -37,7 +37,17 @@ class RevendaproParser(BaseParser):
                     modelo_veiculo, versao_veiculo
                 )
             else:
-                categoria_final = self.definir_categoria_veiculo(modelo_veiculo, opcionais_veiculo)
+                # HIERARQUIA DE CATEGORIZAÇÃO:
+                # 1. Busca "hatch" ou "sedan" no campo Versao do XML
+                texto_busca = f"{versao_veiculo or ''}".upper()
+                if "HATCH" in texto_busca:
+                    categoria_final = "Hatch"
+                elif "SEDAN" in texto_busca:
+                    categoria_final = "Sedan"
+                else:
+                    # 2. Infere do nosso mapeamento com sistema de scoring
+                    categoria_final = self.definir_categoria_veiculo(modelo_veiculo, opcionais_veiculo)
+                
                 cilindrada_final = None
 
             parsed = self.normalize_vehicle({
