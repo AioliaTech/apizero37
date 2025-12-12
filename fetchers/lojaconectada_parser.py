@@ -7,6 +7,28 @@ from typing import Dict, List, Any
 
 class LojaConectadaParser(BaseParser):
     """Parser para dados da Loja Conectada"""
+    
+    # Mapeamento de categorias específico da Loja Conectada
+    CATEGORIA_MAPPING = {
+        "conversivel/cupe": "Conversível",
+        "conversível/cupê": "Conversível",
+        "conversivel": "Conversível",
+        "picapes": "Caminhonete",
+        "picape": "Caminhonete",
+        "suv / utilitario esportivo": "SUV",
+        "suv / utilitário esportivo": "SUV",
+        "suv": "SUV",
+        "van/utilitario": "Utilitário",
+        "van/utilitário": "Utilitário",
+        "utilitario": "Utilitário",
+        "wagon/perua": "Minivan",
+        "perua": "Minivan",
+        "minivan": "Minivan",
+        "hatch": "Hatch",
+        "sedan": "Sedan",
+        "caminhonete": "Caminhonete",
+        "off-road": "Off-road"
+    }
 
     def can_parse(self, data: Any, url: str) -> bool:
         """Verifica se pode processar dados da Loja Conectada"""
@@ -51,7 +73,30 @@ class LojaConectadaParser(BaseParser):
                 tipo_final = "moto"
             else:
                 modelo_veiculo = v.get("model", {}).get("name", "")
-                categoria_final = self.definir_categoria_veiculo(modelo_veiculo, opcionais_veiculo)
+                versao_veiculo = versao_name
+                
+                # HIERARQUIA DE CATEGORIZAÇÃO:
+                # 1. Usa campo bodywork.name do JSON se disponível
+                bodywork_name = v.get("bodywork", {}).get("name", "")
+                bodywork_lower = bodywork_name.lower().strip() if bodywork_name else ""
+                categoria_bodywork = self.CATEGORIA_MAPPING.get(bodywork_lower, None)
+                
+                if categoria_bodywork:
+                    categoria_final = categoria_bodywork
+                elif bodywork_name:
+                    # Se bodywork existe mas não está no mapeamento, usa direto
+                    categoria_final = bodywork_name
+                else:
+                    # 2. Busca "hatch" ou "sedan" no modelo e versão
+                    texto_busca = f"{modelo_veiculo or ''} {versao_veiculo or ''}".upper()
+                    if "HATCH" in texto_busca:
+                        categoria_final = "Hatch"
+                    elif "SEDAN" in texto_busca:
+                        categoria_final = "Sedan"
+                    else:
+                        # 3. Infere do nosso mapeamento com sistema de scoring
+                        categoria_final = self.definir_categoria_veiculo(modelo_veiculo, opcionais_veiculo)
+                
                 cilindrada_final = None
                 categoria_name = v.get("category", {}).get("name", "")
                 tipo_final = "carro" if categoria_name.lower() == "car" else categoria_name
@@ -72,7 +117,7 @@ class LojaConectadaParser(BaseParser):
                 "cambio": v.get("transmission", {}).get("name"),
                 "motor": motor_veiculo,
                 "portas": v.get("doors"),
-                "categoria": v.get("bodywork", {}).get("name") or categoria_final,
+                "categoria": categoria_final,
                 "cilindrada": cilindrada_final,
                 "preco": self.converter_preco(v.get("price")),
                 "opcionais": opcionais_veiculo,
