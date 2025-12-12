@@ -44,11 +44,11 @@ class ClickGarageParser(BaseParser):
             
             if is_moto:
                 # Para motos: usa o sistema com modelo E versão
-                cilindrada_final, categoria_final = self.inferir_cilindrada_e_categoria_moto(modelo_final, "")
+                cilindrada_final, categoria_final = self.inferir_cilindrada_e_categoria_moto(modelo_completo, "")
                 tipo_final = "moto"
             else:
-                # Para carros: usa o sistema existente
-                categoria_final = self.definir_categoria_veiculo(modelo_final, opcionais_processados)
+                # Para carros: usa o modelo completo do XML para categorização
+                categoria_final = self.definir_categoria_veiculo(modelo_completo, opcionais_processados)
                 cilindrada_final = None
                 tipo_final = "carro"
             
