@@ -21,7 +21,7 @@ hatch_sedan_models = ["330e", "320iA", "onix", "hb20", "yaris", "city", "a3", "c
 for model in hatch_sedan_models: 
     MAPEAMENTO_CATEGORIAS[model] = "hatch,sedan"
 
-suv_models = ["Cayenne", "wrv", "w-rv", "blazer", "f-pace", "vitara", "VITARA", "kona", "KONA", "freemont", "RANGE ROVER SPORT", "GLK 220", "disc spt", "veracruz", "Captiva", "Discovery", "Macan", "JOURNEY", "XC90", "xc60", "tiggo", "edge", "outlander", "range rover evoque", "song plus", "duster", "ecosport", "hrv", "hr-v", "COMPASS", "compass", "renegade", "tracker", "kicks", "captur", "creta", "tucson", "santa fe", "sorento", "sportage", "pajero", "tr4", "aircross", "tiguan", "t-cross", "tcross", "rav4", "land cruiser", "cherokee", "grand cherokee", "trailblazer", "pulse", "fastback", "territory", "bronco sport", "2008", "3008", "5008", "c4 cactus", "taos", "crv", "cr-v", "corolla cross", "hilux sw4", "sw4", "pajero sport", "commander", "nivus", "equinox", "x1", "x2", "x3", "x4", "x5", "x6", "x7", "ix", "ix1", "ix2", "ix3", "gla", "glb", "glc", "gle", "gls", "classe g", "eqa", "eqb", "eqc", "q2", "q3", "q5", "q7", "q8", "q6 e-tron", "e-tron", "q4 e-tron", "q4etron", "wrx", "xv"]
+suv_models = ["evoque", "Cayenne", "wrv", "w-rv", "blazer", "f-pace", "vitara", "VITARA", "kona", "KONA", "freemont", "RANGE ROVER SPORT", "GLK 220", "disc spt", "veracruz", "Captiva", "Discovery", "Macan", "JOURNEY", "XC90", "xc60", "tiggo", "edge", "outlander", "range rover evoque", "song plus", "duster", "ecosport", "hrv", "hr-v", "COMPASS", "compass", "renegade", "tracker", "kicks", "captur", "creta", "tucson", "santa fe", "sorento", "sportage", "pajero", "tr4", "aircross", "tiguan", "t-cross", "tcross", "rav4", "land cruiser", "cherokee", "grand cherokee", "trailblazer", "pulse", "fastback", "territory", "bronco sport", "2008", "3008", "5008", "c4 cactus", "taos", "crv", "cr-v", "corolla cross", "hilux sw4", "sw4", "pajero sport", "commander", "nivus", "equinox", "x1", "x2", "x3", "x4", "x5", "x6", "x7", "ix", "ix1", "ix2", "ix3", "gla", "glb", "glc", "gle", "gls", "classe g", "eqa", "eqb", "eqc", "q2", "q3", "q5", "q7", "q8", "q6 e-tron", "e-tron", "q4 e-tron", "q4etron", "wrx", "xv"]
 for model in suv_models: 
     MAPEAMENTO_CATEGORIAS[model] = "SUV"
 
@@ -131,13 +131,16 @@ MAPEAMENTO_MOTOS = {
     "jl 50": (50, "scooter"),
     "xy 125": (125, "scooter"),
     "adv 150": (150, "scooter"),
+    "adv 160": (160, "scooter"),
+    "neo 125": (125, "scooter"),
     "biz125": (125, "scooter"),  # Variação sem espaço
     "biz 125 es": (125, "scooter"),
     "biz125 es": (125, "scooter"),  # Variação sem espaço
     "biz 110": (110, "scooter"),
     "biz110": (110, "scooter"),  # Variação sem espaço
     "biz es": (125, "scooter"),
-    "biz ex": (125, "scooter"),    
+    "biz ex": (125, "scooter"),
+    "biz 100": (100, "scooter"),
     "pop 110": (110, "scooter"),
     "pop110": (110, "scooter"),  # Variação sem espaço
     "pop 110i": (110, "scooter"),
@@ -163,6 +166,7 @@ MAPEAMENTO_MOTOS = {
     
     # Trail/Offroad (dual-sport, suspensão robusta)
     "NH 190": (190, "trail"),
+    "crosser": (150, "trail"),
     "nxr 150 bros": (150, "trail"),
     "shi 175": (150, "trail"),
     "nxr150 bros": (150, "trail"),  # Variação sem espaço
@@ -295,6 +299,7 @@ MAPEAMENTO_MOTOS = {
     "hayabusa": (1350, "esportiva carenada"),
     
     # Esportiva Naked (naked sport, sem carenagem)
+    "CB500F": (500, "esportiva naked"),
     "Z 400": (400, "esportiva naked"),    
     "310 R": (310, "esportiva naked"),
     "Z 1000": (1000, "esportiva naked"),
@@ -402,6 +407,8 @@ MAPEAMENTO_MOTOS = {
 
 
     # ATV/Quadriciclo
+    "brave 110cc": (110, "quadriciculo"),
+    "shark 1200w": (0, "quadriciculo"),
     "shark 125": (125, "quadriciculo"),
     "BOMBARDIER 200 RALLY": (200, "quadriciculo"),
     "cforce 1000": (1000, "quadriciculo"),
