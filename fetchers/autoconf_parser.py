@@ -50,16 +50,24 @@ class AutoconfParser(BaseParser):
                 )
                 tipo_final = "moto"
             else:
-                # Primeiro tenta inferir categoria pelo modelo/versão (como no Autocerto)
-                categoria_modelo = self.definir_categoria_veiculo(modelo_veiculo, opcionais_veiculo)
+                # HIERARQUIA DE CATEGORIZAÇÃO:
+                # 1. Usa campo BODY do XML se disponível
+                body_category = v.get("BODY", "")
+                body_category_lower = body_category.lower().strip() if body_category else ""
+                categoria_body = self.CATEGORIA_MAPPING.get(body_category_lower, None)
                 
-                # Se não conseguiu inferir pelo modelo, usa o campo BODY com mapeamento
-                if not categoria_modelo or categoria_modelo == "Não informado":
-                    body_category = v.get("BODY", "")
-                    body_category_lower = body_category.lower().strip() if body_category else ""
-                    categoria_final = self.CATEGORIA_MAPPING.get(body_category_lower, body_category or "Não informado")
+                if categoria_body:
+                    categoria_final = categoria_body
                 else:
-                    categoria_final = categoria_modelo
+                    # 2. Busca "hatch" ou "sedan" no modelo completo e versão
+                    texto_busca = f"{modelo_veiculo or ''} {versao_veiculo or ''}".upper()
+                    if "HATCH" in texto_busca:
+                        categoria_final = "Hatch"
+                    elif "SEDAN" in texto_busca:
+                        categoria_final = "Sedan"
+                    else:
+                        # 3. Infere do nosso mapeamento com sistema de scoring
+                        categoria_final = self.definir_categoria_veiculo(modelo_veiculo, opcionais_veiculo) or "Não informado"
                     
                 cilindrada_final = None
                 tipo_final = "carro" if categoria_veiculo_lower == "carros" else categoria_veiculo
