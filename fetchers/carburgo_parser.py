@@ -14,7 +14,7 @@ class CarburgoParser(BaseParser):
         """Verifica se pode processar dados do Carburgo"""
         if not url:
             return False
-        return "kiaautovale.com.br" in url.lower()
+        return "kiaautovale" in url.lower()
     
     def parse(self, data: Any, url: str) -> List[Dict]:
         """Processa dados do Carburgo"""
