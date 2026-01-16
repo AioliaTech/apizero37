@@ -24,6 +24,7 @@ from fetchers import (
     RevendaPlusParser,
     CarburgoParser,
     LojaConectadaParser,
+    AdmycarParser,
     WordPressParser
 )
 
@@ -54,6 +55,7 @@ class UnifiedVehicleFetcher:
             RevendaPlusParser(),
             CarburgoParser(),
             WordPressParser(),
+            AdmycarParser(),
             LojaConectadaParser()
         ]
         print("[INFO] Sistema unificado iniciado com parsers modularizados")
