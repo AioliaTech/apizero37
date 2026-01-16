@@ -21,6 +21,7 @@ from .revendaplus_parser import RevendaPlusParser
 from .carburgo_parser import CarburgoParser
 from .lojaconectada_parser import LojaConectadaParser
 from .admycar_parser import AdmycarParser
+from .autogestor_parser import AutogestorParser
 
 __all__ = [
     'RevendaiParser',
@@ -42,5 +43,6 @@ __all__ = [
     'WordPressParser',
     'RevendaPlusParser',
     'AdmycarParser',
+    'AutogestorParser',
     'LojaConectadaParser'
 ]
