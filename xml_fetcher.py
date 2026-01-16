@@ -25,6 +25,7 @@ from fetchers import (
     CarburgoParser,
     LojaConectadaParser,
     AdmycarParser,
+    AutogestorParser,
     WordPressParser
 )
 
@@ -39,6 +40,7 @@ class UnifiedVehicleFetcher:
         # Inicializa TODOS os parsers usando as classes da pasta fetchers
         self.parsers = [
             AltimusParser(),
+            AutogestorParser(),
             FronteiraParser(),
             ClickGarageParser(), 
             AutocertoParser(), 
