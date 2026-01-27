@@ -34,6 +34,10 @@ class RevendaiParser(BaseParser):
             # Validação de cada veículo
             if not isinstance(v, dict):
                 continue
+            
+            # Ignora veículos inativos
+            if v.get("ativo") == False:
+                continue
                 
             modelo_veiculo = v.get("modelo")
             versao_veiculo = v.get("versao")
