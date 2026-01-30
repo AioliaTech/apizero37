@@ -251,13 +251,16 @@ class NetcarParser(BaseParser):
     def _extract_photos(self, v: Dict) -> List[str]:
         """Extrai fotos do veículo Netcar (foto1 até foto14)"""
         fotos = []
+        base_url = "https://www.netcarmultimarcas.com.br/imagens/veiculos_automacar/small/"
         
         # Itera de foto1 até foto14
         for i in range(1, 15):
             foto_key = f"foto{i}"
-            foto_url = v.get(foto_key)
+            foto_filename = v.get(foto_key)
             
-            if foto_url and foto_url.strip():
+            if foto_filename and foto_filename.strip():
+                # Monta URL completa
+                foto_url = base_url + foto_filename
                 fotos.append(foto_url)
         
         return fotos
