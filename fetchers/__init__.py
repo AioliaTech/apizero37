@@ -22,9 +22,11 @@ from .carburgo_parser import CarburgoParser
 from .lojaconectada_parser import LojaConectadaParser
 from .admycar_parser import AdmycarParser
 from .autogestor_parser import AutogestorParser
+from .netcar_parser import NetcarParser
 
 __all__ = [
     'RevendaiParser',
+    'NetcarParser',
     'BaseParser',
     'AltimusParser',
     'AutocertoParser', 
