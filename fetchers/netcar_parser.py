@@ -259,8 +259,10 @@ class NetcarParser(BaseParser):
             foto_filename = v.get(foto_key)
             
             if foto_filename and foto_filename.strip():
+                # Codifica apenas os espaços
+                foto_filename_encoded = foto_filename.replace(" ", "%20")
                 # Monta URL completa
-                foto_url = base_url + foto_filename
+                foto_url = base_url + foto_filename_encoded
                 fotos.append(foto_url)
         
         return fotos
