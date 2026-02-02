@@ -6,9 +6,6 @@ from .base_parser import BaseParser
 from typing import Dict, List, Any
 import re
 import xml.etree.ElementTree as ET
-import logging
-
-logger = logging.getLogger(__name__)
 
 class AltimusParser(BaseParser):
     """Parser para dados do Altimus"""
@@ -19,43 +16,145 @@ class AltimusParser(BaseParser):
     
     def parse(self, data: Any, url: str) -> List[Dict]:
         """Processa dados do Altimus (JSON ou XML)"""
-        # Detecta se é XML ou JSON
-        if isinstance(data, str):
-            # Se for string, tenta fazer parse como XML
-            try:
-                logger.info("Tentando fazer parse do XML...")
-                veiculos_data = self._parse_xml(data)
-                logger.info(f"XML parseado com sucesso. {len(veiculos_data)} veículos encontrados.")
-            except Exception as e:
-                logger.error(f"Erro ao fazer parse do XML: {e}", exc_info=True)
-                return []
-        else:
-            # Se for dict, processa como JSON
-            veiculos_data = data.get("veiculos", [])
-            if isinstance(veiculos_data, dict):
-                veiculos_data = [veiculos_data]
-            logger.info(f"JSON processado. {len(veiculos_data)} veículos encontrados.")
+        print(f"[DEBUG AltimusParser] Tipo do data recebido: {type(data)}")
+        print(f"[DEBUG AltimusParser] Primeiros 300 chars: {str(data)[:300]}")
         
-        return self._process_vehicles(veiculos_data)
+        # Detecta se é XML string, XML parseado ou JSON
+        if isinstance(data, str):
+            print("[DEBUG AltimusParser] Detectado como STRING (XML)")
+            try:
+                veiculos_data = self._parse_xml_string(data)
+                print(f"[DEBUG AltimusParser] XML string parseado! {len(veiculos_data)} veículos")
+            except Exception as e:
+                print(f"[ERROR AltimusParser] Erro ao parsear XML string: {e}")
+                import traceback
+                traceback.print_exc()
+                return []
+        
+        elif isinstance(data, dict):
+            # Verifica se é JSON tradicional com chave "veiculos"
+            if "veiculos" in data:
+                print("[DEBUG AltimusParser] Detectado como DICT (JSON)")
+                veiculos_data = data.get("veiculos", [])
+                if isinstance(veiculos_data, dict):
+                    veiculos_data = [veiculos_data]
+                print(f"[DEBUG AltimusParser] JSON processado. {len(veiculos_data)} veículos")
+            
+            # Verifica se é XML já parseado (dict com estrutura diferente)
+            elif "CargaVeiculos" in data or "Veiculo" in data:
+                print("[DEBUG AltimusParser] Detectado como DICT de XML parseado")
+                veiculos_data = self._parse_xml_dict(data)
+                print(f"[DEBUG AltimusParser] XML dict parseado! {len(veiculos_data)} veículos")
+            
+            else:
+                print("[ERROR AltimusParser] Estrutura de dict não reconhecida")
+                print(f"[DEBUG AltimusParser] Keys disponíveis: {list(data.keys())}")
+                return []
+        
+        else:
+            print(f"[ERROR AltimusParser] Tipo não suportado: {type(data)}")
+            return []
+        
+        resultado = self._process_vehicles(veiculos_data)
+        print(f"[DEBUG AltimusParser] Retornando {len(resultado)} veículos processados")
+        return resultado
     
-    def _parse_xml(self, xml_string: str) -> List[Dict]:
-        """Converte XML para estrutura dict compatível com o parse JSON"""
+    def _parse_xml_dict(self, data: Dict) -> List[Dict]:
+        """Processa XML que já foi parseado para dict"""
+        print("[DEBUG _parse_xml_dict] Processando dict de XML")
+        
+        # Tenta encontrar a lista de veículos
+        if "CargaVeiculos" in data:
+            carga = data["CargaVeiculos"]
+            if isinstance(carga, dict) and "Veiculo" in carga:
+                veiculos_list = carga["Veiculo"]
+            else:
+                veiculos_list = []
+        elif "Veiculo" in data:
+            veiculos_list = data["Veiculo"]
+        else:
+            print("[ERROR _parse_xml_dict] Não encontrou veículos no dict")
+            return []
+        
+        # Garante que é uma lista
+        if isinstance(veiculos_list, dict):
+            veiculos_list = [veiculos_list]
+        
+        print(f"[DEBUG _parse_xml_dict] Encontrados {len(veiculos_list)} veículos no dict")
+        
+        # Converte cada veículo para o formato esperado
+        veiculos = []
+        for v_dict in veiculos_list:
+            veiculo = self._normalize_xml_dict_vehicle(v_dict)
+            veiculos.append(veiculo)
+        
+        return veiculos
+    
+    def _normalize_xml_dict_vehicle(self, v: Dict) -> Dict:
+        """Normaliza um veículo de XML dict para o formato padrão"""
+        # Opcionais
+        opcionais_parts = []
+        equipamentos = v.get('Equipamentos', '')
+        if equipamentos:
+            opcionais_parts.append(equipamentos)
+        
+        if v.get('Ar_condicionado') == 'sim':
+            opcionais_parts.append('Ar condicionado')
+        if v.get('Vidros_eletricos') == 'sim':
+            opcionais_parts.append('Vidros elétricos')
+        if v.get('Travas_eletricas') == 'sim':
+            opcionais_parts.append('Travas elétricas')
+        if v.get('Desembacador_traseiro') == 'sim':
+            opcionais_parts.append('Desembaçador traseiro')
+        if v.get('Direcao_hidraulica') == 'sim':
+            opcionais_parts.append('Direção hidráulica')
+        
+        # Fotos
+        fotos_text = v.get('Fotos', '')
+        if fotos_text:
+            fotos = [f.strip() for f in fotos_text.split(';') if f.strip()]
+        else:
+            fotos = []
+        
+        return {
+            'id': v.get('Codigo'),
+            'tipo': v.get('Tipo'),
+            'marca': v.get('Marca'),
+            'modelo': v.get('Modelo'),
+            'versao': v.get('ModeloVersao'),
+            'anoFabricacao': v.get('AnoFabr'),
+            'anoModelo': v.get('AnoModelo'),
+            'ano': v.get('AnoModelo'),
+            'combustivel': v.get('Combustivel'),
+            'cambio': v.get('Cambio'),
+            'portas': v.get('Portas'),
+            'cor': v.get('Cor'),
+            'km': v.get('Km'),
+            'preco': v.get('Preco'),
+            'valorVenda': v.get('Preco'),
+            'opcionais': ', '.join(opcionais_parts) if opcionais_parts else '',
+            'fotos': fotos
+        }
+    
+    def _parse_xml_string(self, xml_string: str) -> List[Dict]:
+        """Converte XML string para estrutura dict compatível"""
         # Remove possível BOM e espaços
         xml_string = xml_string.strip()
         if xml_string.startswith('\ufeff'):
             xml_string = xml_string[1:]
         
-        logger.info(f"Primeiros 200 caracteres do XML: {xml_string[:200]}")
+        print(f"[DEBUG _parse_xml_string] Iniciando parse do XML")
         
         root = ET.fromstring(xml_string)
-        logger.info(f"Root tag: {root.tag}")
+        print(f"[DEBUG _parse_xml_string] Root tag: {root.tag}")
+        
+        veiculos_elementos = root.findall('Veiculo')
+        print(f"[DEBUG _parse_xml_string] Encontrados {len(veiculos_elementos)} elementos Veiculo")
         
         veiculos = []
-        
-        for veiculo_element in root.findall('Veiculo'):
+        for idx, veiculo_element in enumerate(veiculos_elementos):
             veiculo = {}
             
-            # Mapeamento dos campos XML para estrutura JSON
             veiculo['id'] = self._get_xml_text(veiculo_element, 'Codigo')
             veiculo['tipo'] = self._get_xml_text(veiculo_element, 'Tipo')
             veiculo['marca'] = self._get_xml_text(veiculo_element, 'Marca')
@@ -72,13 +171,12 @@ class AltimusParser(BaseParser):
             veiculo['preco'] = self._get_xml_text(veiculo_element, 'Preco')
             veiculo['valorVenda'] = self._get_xml_text(veiculo_element, 'Preco')
             
-            # Opcionais - concatena campos relevantes
+            # Opcionais
             opcionais_parts = []
             equipamentos = self._get_xml_text(veiculo_element, 'Equipamentos')
             if equipamentos:
                 opcionais_parts.append(equipamentos)
             
-            # Adiciona campos opcionais se existirem
             if self._get_xml_text(veiculo_element, 'Ar_condicionado') == 'sim':
                 opcionais_parts.append('Ar condicionado')
             if self._get_xml_text(veiculo_element, 'Vidros_eletricos') == 'sim':
@@ -92,17 +190,16 @@ class AltimusParser(BaseParser):
             
             veiculo['opcionais'] = ', '.join(opcionais_parts) if opcionais_parts else ''
             
-            # Fotos - split por ponto e vírgula
+            # Fotos
             fotos_text = self._get_xml_text(veiculo_element, 'Fotos')
             if fotos_text:
                 veiculo['fotos'] = [f.strip() for f in fotos_text.split(';') if f.strip()]
             else:
                 veiculo['fotos'] = []
             
-            logger.info(f"Veículo parseado: {veiculo.get('marca')} {veiculo.get('modelo')}")
+            print(f"[DEBUG _parse_xml_string] Veículo {idx + 1}: {veiculo.get('marca')} {veiculo.get('modelo')}")
             veiculos.append(veiculo)
         
-        logger.info(f"Total de veículos parseados do XML: {len(veiculos)}")
         return veiculos
     
     def _get_xml_text(self, element: ET.Element, tag: str) -> str:
@@ -112,6 +209,7 @@ class AltimusParser(BaseParser):
     
     def _process_vehicles(self, veiculos: List[Dict]) -> List[Dict]:
         """Processa lista de veículos (comum para JSON e XML)"""
+        print(f"[DEBUG _process_vehicles] Processando {len(veiculos)} veículos...")
         parsed_vehicles = []
         
         for v in veiculos:
@@ -120,7 +218,6 @@ class AltimusParser(BaseParser):
             opcionais_veiculo = self._parse_opcionais(v.get("opcionais"))
             combustivel_veiculo = v.get("combustivel")
             
-            # Determina se é moto ou carro - CORREÇÃO PARA EVITAR ERRO DE None
             tipo_veiculo = v.get("tipo", "")
             tipo_veiculo_lower = tipo_veiculo.lower() if tipo_veiculo else ""
             is_moto = "moto" in tipo_veiculo_lower or "motocicleta" in tipo_veiculo_lower
@@ -133,10 +230,8 @@ class AltimusParser(BaseParser):
                 categoria_final = self.definir_categoria_veiculo(modelo_veiculo, opcionais_veiculo)
                 cilindrada_final = None
             
-            # Determina o tipo final do veículo
             tipo_final = self._determine_tipo(tipo_veiculo, is_moto)
             
-            # NOVA REGRA: Se tipo for 'moto' ou 'eletrico' e combustível for 'Elétrico', categoria = "Scooter Eletrica"
             if (tipo_final in ['moto', 'eletrico'] and 
                 combustivel_veiculo and 
                 str(combustivel_veiculo).lower() == 'elétrico'):
@@ -165,7 +260,7 @@ class AltimusParser(BaseParser):
             })
             parsed_vehicles.append(parsed)
         
-        logger.info(f"Total de veículos processados: {len(parsed_vehicles)}")
+        print(f"[DEBUG _process_vehicles] Total processado: {len(parsed_vehicles)} veículos")
         return parsed_vehicles
     
     def _parse_opcionais(self, opcionais: Any) -> str:
@@ -179,7 +274,6 @@ class AltimusParser(BaseParser):
         if not tipo_original:
             return "carro" if not is_moto else "moto"
         
-        # Normaliza tipos do XML
         tipo_lower = tipo_original.lower()
         if "motos" in tipo_lower or "moto" in tipo_lower:
             return "moto"
@@ -212,6 +306,5 @@ class AltimusParser(BaseParser):
         if not versao:
             return None
         
-        # Busca padrão de cilindrada (ex: 1.4, 2.0, 1.6)
         motor_match = re.search(r'\b(\d+\.\d+)\b', str(versao))
         return motor_match.group(1) if motor_match else None
