@@ -6,6 +6,9 @@ from .base_parser import BaseParser
 from typing import Dict, List, Any
 import re
 import xml.etree.ElementTree as ET
+import logging
+
+logger = logging.getLogger(__name__)
 
 class AltimusParser(BaseParser):
     """Parser para dados do Altimus"""
@@ -20,21 +23,33 @@ class AltimusParser(BaseParser):
         if isinstance(data, str):
             # Se for string, tenta fazer parse como XML
             try:
+                logger.info("Tentando fazer parse do XML...")
                 veiculos_data = self._parse_xml(data)
-            except Exception:
-                # Se falhar, retorna vazio
+                logger.info(f"XML parseado com sucesso. {len(veiculos_data)} veículos encontrados.")
+            except Exception as e:
+                logger.error(f"Erro ao fazer parse do XML: {e}", exc_info=True)
                 return []
         else:
             # Se for dict, processa como JSON
             veiculos_data = data.get("veiculos", [])
             if isinstance(veiculos_data, dict):
                 veiculos_data = [veiculos_data]
+            logger.info(f"JSON processado. {len(veiculos_data)} veículos encontrados.")
         
         return self._process_vehicles(veiculos_data)
     
     def _parse_xml(self, xml_string: str) -> List[Dict]:
         """Converte XML para estrutura dict compatível com o parse JSON"""
+        # Remove possível BOM e espaços
+        xml_string = xml_string.strip()
+        if xml_string.startswith('\ufeff'):
+            xml_string = xml_string[1:]
+        
+        logger.info(f"Primeiros 200 caracteres do XML: {xml_string[:200]}")
+        
         root = ET.fromstring(xml_string)
+        logger.info(f"Root tag: {root.tag}")
+        
         veiculos = []
         
         for veiculo_element in root.findall('Veiculo'):
@@ -84,8 +99,10 @@ class AltimusParser(BaseParser):
             else:
                 veiculo['fotos'] = []
             
+            logger.info(f"Veículo parseado: {veiculo.get('marca')} {veiculo.get('modelo')}")
             veiculos.append(veiculo)
         
+        logger.info(f"Total de veículos parseados do XML: {len(veiculos)}")
         return veiculos
     
     def _get_xml_text(self, element: ET.Element, tag: str) -> str:
@@ -148,6 +165,7 @@ class AltimusParser(BaseParser):
             })
             parsed_vehicles.append(parsed)
         
+        logger.info(f"Total de veículos processados: {len(parsed_vehicles)}")
         return parsed_vehicles
     
     def _parse_opcionais(self, opcionais: Any) -> str:
