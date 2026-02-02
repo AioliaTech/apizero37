@@ -5,6 +5,7 @@ Parser específico para Altimus (altimus.com.br)
 from .base_parser import BaseParser
 from typing import Dict, List, Any
 import re
+import xml.etree.ElementTree as ET
 
 class AltimusParser(BaseParser):
     """Parser para dados do Altimus"""
@@ -14,12 +15,88 @@ class AltimusParser(BaseParser):
         return "altimus.com.br" in url.lower()
     
     def parse(self, data: Any, url: str) -> List[Dict]:
-        """Processa dados do Altimus"""
-        veiculos = data.get("veiculos", [])
-        if isinstance(veiculos, dict):
-            veiculos = [veiculos]
+        """Processa dados do Altimus (JSON ou XML)"""
+        # Detecta se é XML ou JSON
+        if isinstance(data, str):
+            # Se for string, tenta fazer parse como XML
+            try:
+                veiculos_data = self._parse_xml(data)
+            except Exception:
+                # Se falhar, retorna vazio
+                return []
+        else:
+            # Se for dict, processa como JSON
+            veiculos_data = data.get("veiculos", [])
+            if isinstance(veiculos_data, dict):
+                veiculos_data = [veiculos_data]
         
+        return self._process_vehicles(veiculos_data)
+    
+    def _parse_xml(self, xml_string: str) -> List[Dict]:
+        """Converte XML para estrutura dict compatível com o parse JSON"""
+        root = ET.fromstring(xml_string)
+        veiculos = []
+        
+        for veiculo_element in root.findall('Veiculo'):
+            veiculo = {}
+            
+            # Mapeamento dos campos XML para estrutura JSON
+            veiculo['id'] = self._get_xml_text(veiculo_element, 'Codigo')
+            veiculo['tipo'] = self._get_xml_text(veiculo_element, 'Tipo')
+            veiculo['marca'] = self._get_xml_text(veiculo_element, 'Marca')
+            veiculo['modelo'] = self._get_xml_text(veiculo_element, 'Modelo')
+            veiculo['versao'] = self._get_xml_text(veiculo_element, 'ModeloVersao')
+            veiculo['anoFabricacao'] = self._get_xml_text(veiculo_element, 'AnoFabr')
+            veiculo['anoModelo'] = self._get_xml_text(veiculo_element, 'AnoModelo')
+            veiculo['ano'] = self._get_xml_text(veiculo_element, 'AnoModelo')
+            veiculo['combustivel'] = self._get_xml_text(veiculo_element, 'Combustivel')
+            veiculo['cambio'] = self._get_xml_text(veiculo_element, 'Cambio')
+            veiculo['portas'] = self._get_xml_text(veiculo_element, 'Portas')
+            veiculo['cor'] = self._get_xml_text(veiculo_element, 'Cor')
+            veiculo['km'] = self._get_xml_text(veiculo_element, 'Km')
+            veiculo['preco'] = self._get_xml_text(veiculo_element, 'Preco')
+            veiculo['valorVenda'] = self._get_xml_text(veiculo_element, 'Preco')
+            
+            # Opcionais - concatena campos relevantes
+            opcionais_parts = []
+            equipamentos = self._get_xml_text(veiculo_element, 'Equipamentos')
+            if equipamentos:
+                opcionais_parts.append(equipamentos)
+            
+            # Adiciona campos opcionais se existirem
+            if self._get_xml_text(veiculo_element, 'Ar_condicionado') == 'sim':
+                opcionais_parts.append('Ar condicionado')
+            if self._get_xml_text(veiculo_element, 'Vidros_eletricos') == 'sim':
+                opcionais_parts.append('Vidros elétricos')
+            if self._get_xml_text(veiculo_element, 'Travas_eletricas') == 'sim':
+                opcionais_parts.append('Travas elétricas')
+            if self._get_xml_text(veiculo_element, 'Desembacador_traseiro') == 'sim':
+                opcionais_parts.append('Desembaçador traseiro')
+            if self._get_xml_text(veiculo_element, 'Direcao_hidraulica') == 'sim':
+                opcionais_parts.append('Direção hidráulica')
+            
+            veiculo['opcionais'] = ', '.join(opcionais_parts) if opcionais_parts else ''
+            
+            # Fotos - split por ponto e vírgula
+            fotos_text = self._get_xml_text(veiculo_element, 'Fotos')
+            if fotos_text:
+                veiculo['fotos'] = [f.strip() for f in fotos_text.split(';') if f.strip()]
+            else:
+                veiculo['fotos'] = []
+            
+            veiculos.append(veiculo)
+        
+        return veiculos
+    
+    def _get_xml_text(self, element: ET.Element, tag: str) -> str:
+        """Extrai texto de um elemento XML de forma segura"""
+        child = element.find(tag)
+        return child.text.strip() if child is not None and child.text else None
+    
+    def _process_vehicles(self, veiculos: List[Dict]) -> List[Dict]:
+        """Processa lista de veículos (comum para JSON e XML)"""
         parsed_vehicles = []
+        
         for v in veiculos:
             modelo_veiculo = v.get("modelo")
             versao_veiculo = v.get("versao")
@@ -83,15 +160,21 @@ class AltimusParser(BaseParser):
         """Determina o tipo final do veículo"""
         if not tipo_original:
             return "carro" if not is_moto else "moto"
-            
-        if tipo_original in ["Bicicleta", "Patinete Elétrico"]:
+        
+        # Normaliza tipos do XML
+        tipo_lower = tipo_original.lower()
+        if "motos" in tipo_lower or "moto" in tipo_lower:
+            return "moto"
+        elif "carros" in tipo_lower or "carro" in tipo_lower:
+            return "carro"
+        elif tipo_original in ["Bicicleta", "Patinete Elétrico"]:
             return "eletrico"
         elif is_moto:
             return "moto"
         elif tipo_original == "Carro/Camioneta":
             return "carro"
         else:
-            return tipo_original.lower()
+            return tipo_lower
     
     def _normalize_cambio(self, cambio: str) -> str:
         """Normaliza informações de câmbio"""
