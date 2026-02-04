@@ -168,6 +168,13 @@ class NetcarParser(BaseParser):
         parsed_vehicles = []
         
         for v in veiculos:
+            # Converte o preço primeiro para validar
+            preco = self.converter_preco(v.get("preco"))
+            
+            # Pula veículos sem preço ou preço zerado
+            if not preco or preco == 0:
+                continue
+            
             modelo_veiculo = v.get("modelo")
             descricao = v.get("descricao")
             
@@ -219,7 +226,7 @@ class NetcarParser(BaseParser):
                 "portas": v.get("portas"),
                 "categoria": categoria_final,
                 "cilindrada": cilindrada_final,
-                "preco": self.converter_preco(v.get("preco")),
+                "preco": preco,
                 "opcionais": opcionais_str,
                 "fotos": self._extract_photos(v)
             })
