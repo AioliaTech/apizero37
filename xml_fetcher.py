@@ -7,6 +7,7 @@ from typing import Dict, List, Any, Optional
 
 # Importa todos os parsers da pasta fetchers
 from fetchers import (
+    RevendaiTelefonesParser,
     AltimusParser,
     AutocertoParser,
     AutoconfParser,
@@ -40,6 +41,7 @@ class UnifiedVehicleFetcher:
     def __init__(self):
         # Inicializa TODOS os parsers usando as classes da pasta fetchers
         self.parsers = [
+            RevendaiTelefonesParser(),
             AltimusParser(),
             NetcarParser(),
             AutogestorParser(),
