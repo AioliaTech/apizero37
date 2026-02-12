@@ -18,7 +18,7 @@ class RevendaiTelefonesParser(BaseParser):
         url = url.lower()
         
         # Verifica se é endpoint do Revendai
-        if "integrador.revendai" not in url:
+        if "telefones" not in url:
             return False
         
         # Verifica se tem dados de telefones
