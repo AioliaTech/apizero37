@@ -23,6 +23,7 @@ from .lojaconectada_parser import LojaConectadaParser
 from .admycar_parser import AdmycarParser
 from .autogestor_parser import AutogestorParser
 from .netcar_parser import NetcarParser
+from .revendai_telefones_parser import RevendaiTelefonesParser
 
 __all__ = [
     'RevendaiParser',
