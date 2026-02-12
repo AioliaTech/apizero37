@@ -26,6 +26,7 @@ from .netcar_parser import NetcarParser
 
 __all__ = [
     'RevendaiParser',
+    'RevendaiTelefonesParser',
     'NetcarParser',
     'BaseParser',
     'AltimusParser',
