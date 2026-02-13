@@ -10,10 +10,7 @@ class EmpreendimentosParser(BaseParser):
 
     def can_parse(self, data: Any, url: str) -> bool:
         """Verifica se pode processar dados de empreendimentos"""
-        if isinstance(data, dict) and "empreendimentos" in data:
-            cliente = data.get("cliente", {})
-            return cliente.get("tipo_negocio") == "empreendimento"
-        return False
+        return "empreendimentos" in url.lower()
 
     def parse(self, data: Any, url: str) -> List[Dict]:
         """Processa os dados de empreendimentos e retorna lista normalizada"""
