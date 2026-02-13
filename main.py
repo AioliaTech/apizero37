@@ -439,6 +439,15 @@ class VehicleSearchEngine:
 
 search_engine = VehicleSearchEngine()
 
+def filter_empreendimentos(vehicles: List[Dict]) -> List[Dict]:
+    """Filtra apenas os empreendimentos da lista de veículos"""
+    return [v for v in vehicles if "empreendimento" in v]
+
+def clean_empreendimento_data(emp: Dict) -> Dict:
+    """Remove campos não desejados dos empreendimentos"""
+    fields_to_remove = ["created_at", "updated_at", "cliente", "cliente_id", "id"]
+    return {k: v for k, v in emp.items() if k not in fields_to_remove}
+
 def save_update_status(success: bool, message: str = "", vehicle_count: int = 0):
     status = {"timestamp": datetime.now().isoformat(), "success": success, "message": message, "vehicle_count": vehicle_count}
     try:
@@ -460,16 +469,18 @@ def wrapped_fetch_and_convert_xml():
     try:
         print("Iniciando atualização dos dados...")
         fetch_and_convert_xml()
-        vehicle_count = 0
+        empreendimentos_count = 0
         if os.path.exists("data.json"):
             try:
                 with open("data.json", "r", encoding="utf-8") as f:
                     data = json.load(f)
-                    vehicle_count = len(data.get("veiculos", []))
+                    vehicles = data.get("veiculos", [])
+                    empreendimentos = filter_empreendimentos(vehicles)
+                    empreendimentos_count = len(empreendimentos)
             except:
                 pass
-        save_update_status(True, "Dados atualizados com sucesso", vehicle_count)
-        print(f"Atualização concluída: {vehicle_count} veículos carregados")
+        save_update_status(True, "Dados atualizados com sucesso", empreendimentos_count)
+        print(f"Atualização concluída: {empreendimentos_count} empreendimentos carregados")
     except Exception as e:
         error_message = f"Erro na atualização: {str(e)}"
         save_update_status(False, error_message)
@@ -564,52 +575,26 @@ def lookup_model(request: Request):
         return JSONResponse(content={"modelo": modelo, "tipo": tipo, "categoria": None, "message": "Modelo de carro não encontrado nos mapeamentos"})
 
 # MOVER ESTA FUNÇÃO PARA ANTES DO ENDPOINT /list
-def _format_vehicle(vehicle: Dict) -> str:
-    tipo = vehicle.get("tipo", "").lower()
-    
+def _format_empreendimento(emp: Dict) -> str:
     def safe_value(value):
         if value is None or value == "":
             return ""
         return str(value)
-    
-    opcionais_str = vehicle.get("opcionais", "")
-    codigos_opcionais = opcionais_para_codigos(opcionais_str)
-    codigos_formatados = f"[{','.join(map(str, codigos_opcionais))}]" if codigos_opcionais else "[]"
-    
-    if "moto" in tipo:
-        return ",".join([
-            safe_value(vehicle.get("id")),
-            safe_value(vehicle.get("tipo")),
-            safe_value(vehicle.get("marca")),
-            safe_value(vehicle.get("modelo")),
-            safe_value(vehicle.get("versao")),
-            safe_value(vehicle.get("cor")),
-            safe_value(vehicle.get("ano")),
-            safe_value(vehicle.get("km")),
-            safe_value(vehicle.get("combustivel")),
-            safe_value(vehicle.get("cilindrada")),
-            safe_value(vehicle.get("preco"))
-        ])
-    else:
-        return ",".join([
-            safe_value(vehicle.get("id")),
-            safe_value(vehicle.get("tipo")),
-            safe_value(vehicle.get("marca")),
-            safe_value(vehicle.get("modelo")),
-            safe_value(vehicle.get("versao")),
-            safe_value(vehicle.get("cor")),
-            safe_value(vehicle.get("ano")),
-            safe_value(vehicle.get("km")),
-            safe_value(vehicle.get("combustivel")),
-            safe_value(vehicle.get("cambio")),
-            safe_value(vehicle.get("motor")),
-            safe_value(vehicle.get("portas")),
-            safe_value(vehicle.get("preco")),
-            codigos_formatados
-        ])
+
+    return ",".join([
+        safe_value(emp.get("id_cv")),
+        safe_value(emp.get("empreendimento")),
+        safe_value(emp.get("endereco")),
+        safe_value(emp.get("bairro")),
+        safe_value(emp.get("cidade")),
+        safe_value(emp.get("tipo")),
+        safe_value(emp.get("segmento")),
+        safe_value(emp.get("metragem")),
+        safe_value(emp.get("quartos"))
+    ])
 
 @app.get("/list")
-def list_vehicles(request: Request):
+def list_empreendimentos(request: Request):
     if not os.path.exists("data.json"):
         return JSONResponse(content={"error": "Nenhum dado disponível"}, status_code=404)
     try:
@@ -621,49 +606,41 @@ def list_vehicles(request: Request):
     except (json.JSONDecodeError, ValueError, KeyError) as e:
         return JSONResponse(content={"error": f"Erro ao carregar dados: {str(e)}"}, status_code=500)
 
+    # Filtrar apenas empreendimentos
+    empreendimentos = filter_empreendimentos(vehicles)
+
     query_params = dict(request.query_params)
-    filter_categoria = query_params.get("categoria")
+    filter_segmento = query_params.get("segmento")
     filter_tipo = query_params.get("tipo")
 
-    filtered_vehicles = vehicles
-    if filter_categoria:
-        filtered_vehicles = [v for v in filtered_vehicles if v.get("categoria") and filter_categoria.lower() in v.get("categoria", "").lower()]
+    filtered_empreendimentos = empreendimentos
+    if filter_segmento:
+        filtered_empreendimentos = [e for e in filtered_empreendimentos if e.get("segmento") and filter_segmento.lower() in e.get("segmento", "").lower()]
     if filter_tipo:
-        filtered_vehicles = [v for v in filtered_vehicles if v.get("tipo") and filter_tipo.lower() in v.get("tipo", "").lower()]
+        filtered_empreendimentos = [e for e in filtered_empreendimentos if e.get("tipo") and filter_tipo.lower() in e.get("tipo", "").lower()]
 
-    categorized_vehicles = {}
+    categorized_empreendimentos = {}
     nao_mapeados = []
-    for vehicle in filtered_vehicles:
-        categoria = vehicle.get("categoria")
-        if not categoria or categoria in ["", "None", None]:
-            nao_mapeados.append(_format_vehicle(vehicle))
+    for emp in filtered_empreendimentos:
+        segmento = emp.get("segmento")
+        if not segmento or segmento in ["", "None", None]:
+            nao_mapeados.append(_format_empreendimento(emp))
             continue
-        if categoria not in categorized_vehicles:
-            categorized_vehicles[categoria] = []
-        formatted_vehicle = _format_vehicle(vehicle)
-        categorized_vehicles[categoria].append(formatted_vehicle)
+        if segmento not in categorized_empreendimentos:
+            categorized_empreendimentos[segmento] = []
+        formatted_emp = _format_empreendimento(emp)
+        categorized_empreendimentos[segmento].append(formatted_emp)
 
-    # ADICIONAR ESTAS LINHAS AQUI:
     instruction_text = (
-        "### COMO LER O JSON de 'BuscaEstoque' (CRUCIAL — leia cada linha com atenção)\n"
-        "- Para motocicletas (se o segundo valor no JSON for 'moto'):\n"
-        "Código ID, tipo (moto), marca, modelo, versão, cor, ano, quilometragem, combustível, cilindrada, preço\n"
-        "- Para carros (se o segundo valor no JSON for 'carro'):\n"
-        "Código ID, tipo (carro), marca, modelo, versão, cor, ano, quilometragem, combustível, câmbio, motor, portas, preço, [opcionais]\n\n"
-        "- Para os opcionais dos carros, alguns números podem aparecer. Aqui está o significado de cada número (se o número ou o opcional não estiver presente, significa que o veículo não possui esse item):\n"
-        "1 - ar-condicionado\n"
-        "2 - airbag\n"
-        "3 - vidros elétricos\n"
-        "4 - freios ABS\n"
-        "5 - direção hidráulica\n"
-        "6 - direção elétrica\n"
-        "7 - sete lugares\n"
+        "### COMO LER O CSV de Empreendimentos (CRUCIAL — leia cada linha com atenção)\n"
+        "id_cv, empreendimento, endereco, bairro, cidade, tipo, segmento, metragem, quartos\n\n"
+        "Exemplo: 56,Residencial Porto Essenza,Rua Henrique Schneider 115,Sarabdi,Porto Alegre,apartamento,medio_padrao,47,91m² 48,18m² 48,33m² 50,77m²,2"
     )
-    
+
     result = {"instruction": instruction_text}
-    
-    for categoria in sorted(categorized_vehicles.keys()):
-        result[categoria] = categorized_vehicles[categoria]
+
+    for segmento in sorted(categorized_empreendimentos.keys()):
+        result[segmento] = categorized_empreendimentos[segmento]
     if nao_mapeados:
         result["NÃO MAPEADOS"] = nao_mapeados
 
@@ -685,7 +662,7 @@ def _collect_multi_params(qp: Any) -> Dict[str, str]:
     return out
 
 @app.get("/api/data")
-def get_data(request: Request):
+def get_empreendimentos_data(request: Request):
     if not os.path.exists("data.json"):
         return JSONResponse(content={"error": "Nenhum dado disponível", "resultados": [], "total_encontrado": 0}, status_code=404)
     try:
@@ -697,30 +674,29 @@ def get_data(request: Request):
     except (json.JSONDecodeError, ValueError, KeyError) as e:
         return JSONResponse(content={"error": f"Erro ao carregar dados: {str(e)}", "resultados": [], "total_encontrado": 0}, status_code=500)
 
+    # Filtrar apenas empreendimentos
+    empreendimentos = filter_empreendimentos(vehicles)
+
     query_params = _collect_multi_params(request.query_params)
 
+    # Para empreendimentos, adaptar os filtros (usar data_entrega como anomax, etc.)
     valormax = search_engine.get_max_value_from_range_param(query_params.pop("ValorMax", None))
-    anomax = search_engine.get_max_value_from_range_param(query_params.pop("AnoMax", None))
+    anomax = search_engine.get_max_value_from_range_param(query_params.pop("AnoMax", None))  # Pode ser usado para data_entrega
     kmmax = search_engine.get_max_value_from_range_param(query_params.pop("KmMax", None))
     ccmax = search_engine.get_max_value_from_range_param(query_params.pop("CcMax", None))
     simples = query_params.pop("simples", None)
     excluir_raw = query_params.pop("excluir", None)
 
-    id_csv = query_params.pop("id", None)
+    id_csv = query_params.pop("id_cv", None)  # Usar id_cv em vez de id
     id_set = set(search_engine.split_multi_value(id_csv)) if id_csv else set()
 
     filters = {
         "tipo": query_params.get("tipo"),
-        "modelo": query_params.get("modelo"),
-        "categoria": query_params.get("categoria"),
-        "cambio": query_params.get("cambio"),
-        "opcionais": query_params.get("opcionais"),
+        "segmento": query_params.get("segmento"),  # Adicionar segmento
+        "bairro": query_params.get("bairro"),  # Adicionar bairro
+        "cidade": query_params.get("cidade"),  # Adicionar cidade
+        "quartos": query_params.get("quartos"),  # Adicionar quartos
         "observacao": query_params.get("observacao"),
-        "marca": query_params.get("marca"),
-        "cor": query_params.get("cor"),
-        "combustivel": query_params.get("combustivel"),
-        "motor": query_params.get("motor"),
-        "portas": query_params.get("portas"),
         "localizacao": query_params.get("localizacao")
     }
     filters = {k: v for k, v in filters.items() if v}
@@ -729,63 +705,73 @@ def get_data(request: Request):
 
     if id_set:
         id_set -= excluded_ids
-        matched = [v for v in vehicles if str(v.get("id")) in id_set]
+        matched = [e for e in empreendimentos if str(e.get("id_cv")) in id_set]
         if matched:
+            # Limpar dados
+            matched = [clean_empreendimento_data(e) for e in matched]
             if simples == "1":
-                for vehicle in matched:
-                    fotos = vehicle.get("fotos")
+                for emp in matched:
+                    fotos = emp.get("fotos")
                     if isinstance(fotos, list) and len(fotos) > 0:
                         if isinstance(fotos[0], str):
-                            vehicle["fotos"] = [fotos[0]]
+                            emp["fotos"] = [fotos[0]]
                         elif isinstance(fotos[0], list) and len(fotos[0]) > 0:
-                            vehicle["fotos"] = [[fotos[0][0]]]
+                            emp["fotos"] = [[fotos[0][0]]]
                         else:
-                            vehicle["fotos"] = []
+                            emp["fotos"] = []
                     else:
-                        vehicle["fotos"] = []
-            return JSONResponse(content={"resultados": matched, "total_encontrado": len(matched), "info": f"Veículos encontrados por IDs: {', '.join(sorted(id_set))}"})
+                        emp["fotos"] = []
+            return JSONResponse(content={"resultados": matched, "total_encontrado": len(matched), "info": f"Empreendimentos encontrados por IDs: {', '.join(sorted(id_set))}"})
         else:
-            return JSONResponse(content={"resultados": [], "total_encontrado": 0, "error": f"Veículo(s) com ID {', '.join(sorted(id_set))} não encontrado(s)"})
+            return JSONResponse(content={"resultados": [], "total_encontrado": 0, "error": f"Empreendimento(s) com ID {', '.join(sorted(id_set))} não encontrado(s)"})
 
     has_search_filters = bool(filters) or valormax or anomax or kmmax or ccmax
 
     if not has_search_filters:
-        all_vehicles = [v for v in vehicles if str(v.get("id")) not in excluded_ids] if excluded_ids else list(vehicles)
-        sorted_vehicles = sorted(all_vehicles, key=lambda v: search_engine.convert_price(v.get("preco")) or 0, reverse=True)
+        all_empreendimentos = [e for e in empreendimentos if str(e.get("id_cv")) not in excluded_ids] if excluded_ids else list(empreendimentos)
+        # Limpar dados
+        all_empreendimentos = [clean_empreendimento_data(e) for e in all_empreendimentos]
+        # Ordenar por algum critério, talvez por id_cv
+        sorted_empreendimentos = sorted(all_empreendimentos, key=lambda e: int(e.get("id_cv", 0)) if e.get("id_cv") and str(e.get("id_cv")).isdigit() else 0, reverse=True)
         if simples == "1":
-            for vehicle in sorted_vehicles:
-                fotos = vehicle.get("fotos")
+            for emp in sorted_empreendimentos:
+                fotos = emp.get("fotos")
                 if isinstance(fotos, list) and len(fotos) > 0:
                     if isinstance(fotos[0], str):
-                        vehicle["fotos"] = [fotos[0]]
+                        emp["fotos"] = [fotos[0]]
                     elif isinstance(fotos[0], list) and len(fotos[0]) > 0:
-                        vehicle["fotos"] = [[fotos[0][0]]]
+                        emp["fotos"] = [[fotos[0][0]]]
                     else:
-                        vehicle["fotos"] = []
+                        emp["fotos"] = []
                 else:
-                    vehicle["fotos"] = []
-        return JSONResponse(content={"resultados": sorted_vehicles, "total_encontrado": len(sorted_vehicles), "info": "Exibindo todo o estoque disponível"})
+                    emp["fotos"] = []
+        return JSONResponse(content={"resultados": sorted_empreendimentos, "total_encontrado": len(sorted_empreendimentos), "info": "Exibindo todos os empreendimentos disponíveis"})
 
-    result = search_engine.search_with_fallback(vehicles, filters, valormax, anomax, kmmax, ccmax, excluded_ids)
+    # Para busca com filtros, usar o search_engine adaptado
+    result = search_engine.search_with_fallback(empreendimentos, filters, valormax, anomax, kmmax, ccmax, excluded_ids)
+
+    if result.vehicles:
+        # Limpar dados
+        result.vehicles = [clean_empreendimento_data(e) for e in result.vehicles]
 
     if simples == "1" and result.vehicles:
-        for vehicle in result.vehicles:
-            fotos = vehicle.get("fotos")
+        for emp in result.vehicles:
+            fotos = emp.get("fotos")
             if isinstance(fotos, list) and len(fotos) > 0:
                 if isinstance(fotos[0], str):
-                    vehicle["fotos"] = [fotos[0]]
+                    emp["fotos"] = [fotos[0]]
                 elif isinstance(fotos[0], list) and len(fotos[0]) > 0:
-                    vehicle["fotos"] = [[fotos[0][0]]]
+                    emp["fotos"] = [[fotos[0][0]]]
                 else:
-                    vehicle["fotos"] = []
+                    emp["fotos"] = []
             else:
-                vehicle["fotos"] = []
+                emp["fotos"] = []
 
     response_data = {"resultados": result.vehicles, "total_encontrado": result.total_found}
     if result.fallback_info:
         response_data.update(result.fallback_info)
     if result.total_found == 0:
-        response_data["instrucao_ia"] = "Não encontramos veículos com os parâmetros informados e também não encontramos opções próximas."
+        response_data["instrucao_ia"] = "Não encontramos empreendimentos com os parâmetros informados e também não encontramos opções próximas."
     return JSONResponse(content=response_data)
 
 @app.get("/api/health")

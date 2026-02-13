@@ -11,7 +11,7 @@ from fetchers import (
     AltimusParser,
     AutocertoParser,
     AutoconfParser,
-    RevendamaisParser, 
+    RevendamaisParser,
     FronteiraParser,
     RevendaproParser,
     ClickGarageParser,
@@ -28,7 +28,8 @@ from fetchers import (
     AdmycarParser,
     AutogestorParser,
     NetcarParser,
-    WordPressParser
+    WordPressParser,
+    EmpreendimentosParser
 )
 
 # =================== CONFIGURAÇÕES GLOBAIS =======================
@@ -46,10 +47,10 @@ class UnifiedVehicleFetcher:
             NetcarParser(),
             AutogestorParser(),
             FronteiraParser(),
-            ClickGarageParser(), 
-            AutocertoParser(), 
-            RevendamaisParser(), 
-            AutoconfParser(), 
+            ClickGarageParser(),
+            AutocertoParser(),
+            RevendamaisParser(),
+            AutoconfParser(),
             SimplesVeiculoParser(),
             RevendaproParser(),
             BoomParser(),
@@ -62,7 +63,8 @@ class UnifiedVehicleFetcher:
             CarburgoParser(),
             WordPressParser(),
             AdmycarParser(),
-            LojaConectadaParser()
+            LojaConectadaParser(),
+            EmpreendimentosParser()
         ]
         print("[INFO] Sistema unificado iniciado com parsers modularizados")
     

@@ -24,6 +24,7 @@ from .admycar_parser import AdmycarParser
 from .autogestor_parser import AutogestorParser
 from .netcar_parser import NetcarParser
 from .revendai_telefones_parser import RevendaiTelefonesParser
+from .empreendimentos_parser import EmpreendimentosParser
 
 __all__ = [
     'RevendaiParser',
@@ -31,7 +32,7 @@ __all__ = [
     'NetcarParser',
     'BaseParser',
     'AltimusParser',
-    'AutocertoParser', 
+    'AutocertoParser',
     'AutoconfParser',
     'RevendamaisParser',
     'FronteiraParser',
@@ -48,5 +49,6 @@ __all__ = [
     'RevendaPlusParser',
     'AdmycarParser',
     'AutogestorParser',
-    'LojaConectadaParser'
+    'LojaConectadaParser',
+    'EmpreendimentosParser'
 ]
