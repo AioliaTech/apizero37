@@ -15,7 +15,7 @@ class RevendaiParser(BaseParser):
             return False
         
         url = url.lower()
-        return "integrador.revendai" in url
+        return "integrador.revendai33" in url
     
     def parse(self, data: Any, url: str) -> List[Dict]:
         """Processa dados do Revendai"""
