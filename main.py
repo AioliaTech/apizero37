@@ -634,7 +634,7 @@ def list_empreendimentos(request: Request):
     instruction_text = (
         "### COMO LER O CSV de Empreendimentos (CRUCIAL — leia cada linha com atenção)\n"
         "id_cv, empreendimento, endereco, bairro, cidade, tipo, segmento, metragem, quartos\n\n"
-        "Exemplo: 56,Residencial Porto Essenza,Rua Henrique Schneider 115,Sarabdi,Porto Alegre,apartamento,medio_padrao,47,91m² 48,18m² 48,33m² 50,77m²,2"
+        "Exemplo: 56,Residencial Porto Essenza,Rua Henrique Schneider 115,Sarandi,Porto Alegre,apartamento,medio_padrao,91m²,2"
     )
 
     result = {"instruction": instruction_text}
