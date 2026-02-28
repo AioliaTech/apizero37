@@ -443,6 +443,10 @@ def filter_empreendimentos(vehicles: List[Dict]) -> List[Dict]:
     """Filtra apenas os empreendimentos da lista de veículos"""
     return [v for v in vehicles if "empreendimento" in v]
 
+def filter_zero37(vehicles: List[Dict]) -> List[Dict]:
+    """Filtra apenas os itens Zero37 (peças de refrigeração)"""
+    return [v for v in vehicles if v.get("tipo") == "peca_refrigeracao"]
+
 def clean_empreendimento_data(emp: Dict) -> Dict:
     """Remove campos não desejados dos empreendimentos"""
     fields_to_remove = ["created_at", "updated_at", "cliente", "cliente_id", "id"]
@@ -773,6 +777,89 @@ def get_empreendimentos_data(request: Request):
     if result.total_found == 0:
         response_data["instrucao_ia"] = "Não encontramos empreendimentos com os parâmetros informados e também não encontramos opções próximas."
     return JSONResponse(content=response_data)
+
+@app.get("/api/zero37")
+def get_zero37_data(request: Request):
+    """Endpoint para buscar peças de refrigeração Zero37"""
+    if not os.path.exists("data.json"):
+        return JSONResponse(content={"error": "Nenhum dado disponível", "resultados": [], "total_encontrado": 0}, status_code=404)
+    try:
+        with open("data.json", "r", encoding="utf-8") as f:
+            data = json.load(f)
+        vehicles = data.get("veiculos", [])
+        if not isinstance(vehicles, list):
+            raise ValueError("Formato inválido: 'veiculos' deve ser uma lista")
+    except (json.JSONDecodeError, ValueError, KeyError) as e:
+        return JSONResponse(content={"error": f"Erro ao carregar dados: {str(e)}", "resultados": [], "total_encontrado": 0}, status_code=500)
+
+    # Filtrar apenas itens Zero37
+    zero37_items = filter_zero37(vehicles)
+
+    query_params = dict(request.query_params)
+    
+    # Parâmetros de busca
+    codigo_interno = query_params.get("codigo_interno", "").strip()
+    nome = query_params.get("nome", "").strip()
+    valormax = search_engine.get_max_value_from_range_param(query_params.get("ValorMax", None))
+    simples = query_params.get("simples", None)
+    
+    results = list(zero37_items)
+    
+    # Filtro por código interno (busca exata)
+    if codigo_interno:
+        results = [item for item in results if str(item.get("opcionais", "")).upper()
+                   .find(f"CÓDIGO: {codigo_interno.upper()}") >= 0
+                   or str(item.get("codigo_interno", "")).upper() == codigo_interno.upper()]
+    
+    # Filtro por nome (fuzzy search com score 93 - fuzz.ratio)
+    if nome:
+        filtered_results = []
+        for item in results:
+            item_nome = item.get("titulo", "") or item.get("nome", "")
+            if not item_nome:
+                continue
+            # Usa fuzz.ratio (score 93) para fuzzy matching
+            score = fuzz.ratio(nome.lower(), item_nome.lower())
+            if score >= 93:
+                filtered_results.append(item)
+        results = filtered_results
+    
+    # Filtro por valor máximo
+    if valormax:
+        try:
+            valormax_float = float(valormax)
+            results = [item for item in results if item.get("preco", 0) <= valormax_float]
+        except (ValueError, TypeError):
+            pass
+    
+    # Ordenar por relevância do fuzzy match se houver busca por nome
+    if nome and results:
+        results = sorted(results, key=lambda item: 
+            fuzz.ratio(nome.lower(), ((item.get("titulo", "") or item.get("nome", "")).lower())), 
+            reverse=True
+        )
+    
+    # Limitar resultados se não for busca específica
+    total_found = len(results)
+    
+    if simples == "1" and results:
+        for item in results:
+            fotos = item.get("fotos")
+            if isinstance(fotos, list) and len(fotos) > 0:
+                if isinstance(fotos[0], str):
+                    item["fotos"] = [fotos[0]]
+                elif isinstance(fotos[0], list) and len(fotos[0]) > 0:
+                    item["fotos"] = [[fotos[0][0]]]
+                else:
+                    item["fotos"] = []
+            else:
+                item["fotos"] = []
+    
+    return JSONResponse(content={
+        "resultados": results, 
+        "total_encontrado": total_found,
+        "info": "Peças de refrigeração Zero37"
+    })
 
 @app.get("/api/health")
 def health_check():

@@ -25,6 +25,7 @@ from .autogestor_parser import AutogestorParser
 from .netcar_parser import NetcarParser
 from .revendai_telefones_parser import RevendaiTelefonesParser
 from .empreendimentos_parser import EmpreendimentosParser
+from .zero37_parser import Zero37Parser
 
 __all__ = [
     'RevendaiParser',
@@ -50,5 +51,6 @@ __all__ = [
     'AdmycarParser',
     'AutogestorParser',
     'LojaConectadaParser',
-    'EmpreendimentosParser'
+    'EmpreendimentosParser',
+    'Zero37Parser'
 ]

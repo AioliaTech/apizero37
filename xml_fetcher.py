@@ -29,7 +29,8 @@ from fetchers import (
     AutogestorParser,
     NetcarParser,
     WordPressParser,
-    EmpreendimentosParser
+    EmpreendimentosParser,
+    Zero37Parser
 )
 
 # =================== CONFIGURAÇÕES GLOBAIS =======================
@@ -64,7 +65,8 @@ class UnifiedVehicleFetcher:
             WordPressParser(),
             AdmycarParser(),
             LojaConectadaParser(),
-            EmpreendimentosParser()
+            EmpreendimentosParser(),
+            Zero37Parser()
         ]
         print("[INFO] Sistema unificado iniciado com parsers modularizados")
     
