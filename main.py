@@ -800,16 +800,12 @@ def get_zero37_data(request: Request):
     # Parâmetros de busca
     codigo_interno = query_params.get("codigo_interno", "").strip()
     nome = query_params.get("nome", "").strip()
-    valormax = search_engine.get_max_value_from_range_param(query_params.get("ValorMax", None))
-    simples = query_params.get("simples", None)
     
     results = list(zero37_items)
     
     # Filtro por código interno (busca exata)
     if codigo_interno:
-        results = [item for item in results if str(item.get("opcionais", "")).upper()
-                   .find(f"CÓDIGO: {codigo_interno.upper()}") >= 0
-                   or str(item.get("codigo_interno", "")).upper() == codigo_interno.upper()]
+        results = [item for item in results if str(item.get("codigo_interno", "")).upper() == codigo_interno.upper()]
     
     # Filtro por nome (fuzzy search com score 93 - fuzz.ratio)
     if nome:
@@ -824,14 +820,6 @@ def get_zero37_data(request: Request):
                 filtered_results.append(item)
         results = filtered_results
     
-    # Filtro por valor máximo
-    if valormax:
-        try:
-            valormax_float = float(valormax)
-            results = [item for item in results if item.get("preco", 0) <= valormax_float]
-        except (ValueError, TypeError):
-            pass
-    
     # Ordenar por relevância do fuzzy match se houver busca por nome
     if nome and results:
         results = sorted(results, key=lambda item: 
@@ -842,21 +830,19 @@ def get_zero37_data(request: Request):
     # Limitar resultados se não for busca específica
     total_found = len(results)
     
-    if simples == "1" and results:
-        for item in results:
-            fotos = item.get("fotos")
-            if isinstance(fotos, list) and len(fotos) > 0:
-                if isinstance(fotos[0], str):
-                    item["fotos"] = [fotos[0]]
-                elif isinstance(fotos[0], list) and len(fotos[0]) > 0:
-                    item["fotos"] = [[fotos[0][0]]]
-                else:
-                    item["fotos"] = []
-            else:
-                item["fotos"] = []
+    # Limpar dados - manter apenas campos necessários
+    cleaned_results = []
+    for item in results:
+        cleaned_results.append({
+            "codigo_interno": item.get("codigo_interno"),
+            "nome": item.get("titulo") or item.get("nome"),
+            "preco": item.get("preco"),
+            "estoque": item.get("estoque"),
+            "foto": item.get("foto") or (item.get("fotos", [None])[0] if item.get("fotos") else None)
+        })
     
     return JSONResponse(content={
-        "resultados": results, 
+        "resultados": cleaned_results, 
         "total_encontrado": total_found,
         "info": "Peças de refrigeração Zero37"
     })

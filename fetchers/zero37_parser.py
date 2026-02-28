@@ -65,6 +65,11 @@ class Zero37Parser(BaseParser):
                 "id": item.get("id"),
                 "tipo": "peca_refrigeracao",
                 "titulo": nome.strip(),
+                "nome": nome.strip(),
+                "preco": preco,
+                "codigo_interno": codigo_interno if codigo_interno and str(codigo_interno).strip() else None,
+                "estoque": estoque if isinstance(estoque, (int, float)) else 0,
+                "foto": fotos[0] if fotos else None,
                 "versao": None,
                 "marca": None,
                 "modelo": None,
@@ -79,11 +84,9 @@ class Zero37Parser(BaseParser):
                 "portas": None,
                 "categoria": "Peça de Refrigeração",
                 "cilindrada": None,
-                "preco": preco,
-                "opcionais": self._build_opcionais(item),
+                "opcionais": "",
                 "localizacao": None,
-                "fotos": fotos,
-                "codigo_interno": codigo_interno if codigo_interno and str(codigo_interno).strip() else None
+                "fotos": fotos
             })
             parsed_items.append(parsed)
         
