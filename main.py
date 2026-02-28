@@ -807,25 +807,29 @@ def get_zero37_data(request: Request):
     if codigo_interno:
         results = [item for item in results if str(item.get("codigo_interno", "")).upper() == codigo_interno.upper()]
     
-    # Filtro por nome (fuzzy search com score 93 - fuzz.ratio)
+    # Filtro por nome (fuzzy search por palavra - cada palavra da busca deve dar match em alguma palavra do nome)
     if nome:
-        filtered_results = []
+        scored_results = []
+        search_words = nome.lower().split()
         for item in results:
             item_nome = item.get("titulo", "") or item.get("nome", "")
             if not item_nome:
                 continue
-            # Usa fuzz.ratio (score 93) para fuzzy matching
-            score = fuzz.ratio(nome.lower(), item_nome.lower())
-            if score >= 93:
-                filtered_results.append(item)
-        results = filtered_results
-    
-    # Ordenar por relevância do fuzzy match se houver busca por nome
-    if nome and results:
-        results = sorted(results, key=lambda item: 
-            fuzz.ratio(nome.lower(), ((item.get("titulo", "") or item.get("nome", "")).lower())), 
-            reverse=True
-        )
+            item_words = item_nome.lower().split()
+            # Cada palavra da busca deve ter match fuzzy >= 93 com pelo menos uma palavra do nome do produto
+            all_matched = True
+            total_score = 0
+            for sw in search_words:
+                best = max((fuzz.ratio(sw, iw) for iw in item_words), default=0)
+                if best < 93:
+                    all_matched = False
+                    break
+                total_score += best
+            if all_matched:
+                scored_results.append((item, total_score))
+        # Ordenar por score total decrescente
+        scored_results.sort(key=lambda x: x[1], reverse=True)
+        results = [item for item, _ in scored_results]
     
     # Limitar resultados se não for busca específica
     total_found = len(results)
