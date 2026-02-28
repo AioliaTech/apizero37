@@ -58,6 +58,9 @@ class Zero37Parser(BaseParser):
             if preco <= 0:
                 continue
             
+            # Extrai código interno
+            codigo_interno = item.get("codigo_interno", "")
+            
             parsed = self.normalize_vehicle({
                 "id": item.get("id"),
                 "tipo": "peca_refrigeracao",
