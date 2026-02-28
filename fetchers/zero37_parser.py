@@ -61,15 +61,18 @@ class Zero37Parser(BaseParser):
             # Extrai código interno
             codigo_interno = item.get("codigo_interno", "")
             
+            # Processa a foto
+            foto_url = self._process_foto(item.get("foto"))
+            
             parsed = self.normalize_vehicle({
                 "id": item.get("id"),
                 "tipo": "peca_refrigeracao",
                 "titulo": nome.strip(),
                 "nome": nome.strip(),
                 "preco": preco,
-                "codigo_interno": codigo_interno if codigo_interno and str(codigo_interno).strip() else None,
+                "codigo_interno": str(codigo_interno) if codigo_interno else None,
                 "estoque": estoque if isinstance(estoque, (int, float)) else 0,
-                "foto": fotos[0] if fotos else None,
+                "foto": foto_url,
                 "versao": None,
                 "marca": None,
                 "modelo": None,
@@ -86,26 +89,26 @@ class Zero37Parser(BaseParser):
                 "cilindrada": None,
                 "opcionais": "",
                 "localizacao": None,
-                "fotos": fotos
+                "fotos": [foto_url] if foto_url else []
             })
             parsed_items.append(parsed)
         
         return parsed_items
     
-    def _process_foto(self, foto: Any) -> List[str]:
-        """Processa a foto - adiciona extensão .jpg quando existir URL"""
+    def _process_foto(self, foto: Any) -> str:
+        """Processa a foto - adiciona &e=jpg quando existir URL"""
         if not foto:
-            return []
+            return None
         
         if isinstance(foto, str):
             foto = foto.strip()
             if foto:
-                # Adiciona .jpg no final da URL se não tiver extensão
-                if not foto.lower().endswith(('.jpg', '.jpeg', '.png', '.gif', '.webp')):
-                    foto = foto + ".jpg"
-                return [foto]
+                # Adiciona &e=jpg no final da URL se não tiver extensão
+                if not foto.lower().endswith(('.jpg', '.jpeg', '.png', '.gif', '.webp', '&e=jpg')):
+                    foto = foto + "&e=jpg"
+                return foto
         
-        return []
+        return None
     
     def _build_opcionais(self, item: Dict) -> str:
         """Constrói o campo opcionais com informações adicionais"""

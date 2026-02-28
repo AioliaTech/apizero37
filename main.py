@@ -833,12 +833,19 @@ def get_zero37_data(request: Request):
     # Limpar dados - manter apenas campos necessários
     cleaned_results = []
     for item in results:
+        # Pegar foto do campo 'foto' ou do primeiro item de 'fotos'
+        foto = item.get("foto")
+        if not foto:
+            fotos = item.get("fotos", [])
+            if isinstance(fotos, list) and len(fotos) > 0:
+                foto = fotos[0] if isinstance(fotos[0], str) else None
+        
         cleaned_results.append({
             "codigo_interno": item.get("codigo_interno"),
             "nome": item.get("titulo") or item.get("nome"),
             "preco": item.get("preco"),
             "estoque": item.get("estoque"),
-            "foto": item.get("foto") or (item.get("fotos", [None])[0] if item.get("fotos") else None)
+            "foto": foto
         })
     
     return JSONResponse(content={
